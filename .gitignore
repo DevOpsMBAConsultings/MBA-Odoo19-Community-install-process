@@ -1,0 +1,24 @@
+# Secrets / env
+config/env
+*.env
+.env
+*.key
+*.pem
+*.p12
+*.crt
+
+# Logs
+*.log
+logs/
+tmp/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/

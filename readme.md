@@ -39,6 +39,12 @@ https://mbaconsultings.com
 
 ## ✅ Install (Ubuntu 24.04)
 
+---
+
+## ✅ Install (Ubuntu 24.04)
+
+Run the following commands on a **fresh Ubuntu 24.04 server**:
+
 ```bash
 sudo apt update -y && sudo apt install -y git
 git clone https://github.com/DevOpsMBAConsultings/MBA-Odoo19-Community-install-process.git

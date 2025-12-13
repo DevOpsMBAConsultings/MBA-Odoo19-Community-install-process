@@ -24,6 +24,10 @@ apt install -y \
   libatlas-base-dev \
   libffi-dev \
   libssl-dev \
-  wkhtmltopdf
+  wkhtmltopdf \
+  libzip-dev \
+  qml-module-qtquick2 \
+  qml-module-qtquick-controls \
+  qml-module-qtquick-layouts
 
 echo "Dependencies installed."

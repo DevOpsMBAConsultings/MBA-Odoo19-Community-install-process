@@ -41,8 +41,6 @@ https://mbaconsultings.com
 
 ---
 
-## ✅ Install (Ubuntu 24.04)
-
 Run the following commands on a **fresh Ubuntu 24.04 server**:
 
 ```bash

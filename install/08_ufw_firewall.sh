@@ -3,19 +3,28 @@ set -e
 
 echo "Installing and configuring UFW firewall..."
 
+apt update -y
 apt install -y ufw
 
-# Allow SSH (critical: do this BEFORE enabling ufw)
+echo "Setting default policies..."
+ufw default deny incoming
+ufw default allow outgoing
+
+echo "Allowing SSH..."
 ufw allow OpenSSH
 
-# Allow HTTP/HTTPS (for future Nginx reverse proxy)
+echo "Allowing HTTP/HTTPS..."
 ufw allow 80/tcp
 ufw allow 443/tcp
 
-# Optional: If you plan to access Odoo directly without Nginx
+# Optional: Uncomment to allow direct Odoo access without reverse proxy
 # ufw allow 8069/tcp
 
-ufw --force enable
+if ufw status | grep -q "Status: active"; then
+  echo "UFW already enabled."
+else
+  ufw --force enable
+fi
 
-echo "✅ UFW enabled."
+echo "✅ UFW configuration applied."
 ufw status verbose

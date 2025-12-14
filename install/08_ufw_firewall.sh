@@ -17,8 +17,13 @@ echo "Allowing HTTP/HTTPS..."
 ufw allow 80/tcp
 ufw allow 443/tcp
 
-# Optional: Uncomment to allow direct Odoo access without reverse proxy
-ufw allow 8069/tcp
+# Optional: allow direct Odoo access (demo/testing) without reverse proxy
+ALLOW_ODOO_PORT="${ALLOW_ODOO_PORT:-0}"
+
+if [ "$ALLOW_ODOO_PORT" = "1" ]; then
+  echo "Allowing Odoo port 8069 (demo mode)..."
+  ufw allow 8069/tcp
+fi
 
 if ufw status | grep -q "Status: active"; then
   echo "UFW already enabled."

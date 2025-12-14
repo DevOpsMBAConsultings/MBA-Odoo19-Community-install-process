@@ -30,16 +30,18 @@ fi
 
 echo ""
 echo "3) Listening ports (local):"
-if ss -lnt | awk '{print $4}' | grep -q ":$PORT$"; then
+if ss -lntp 2>/dev/null | grep -Eq ":(8069)\s"; then
   echo "✅ Port $PORT is LISTENING locally"
+  ss -lntp 2>/dev/null | grep "$PORT" || true
 else
   echo "⚠️ Port $PORT is NOT listening locally"
+  echo "   Tip: check bind in $CONF (xmlrpc_interface / proxy mode) and logs: sudo journalctl -u $SERVICE -n 200 --no-pager"
 fi
 
 echo ""
 echo "4) UFW status and port $PORT rule:"
 if command -v ufw >/dev/null 2>&1; then
-  ufw status | head -n 20
+  ufw status | head -n 25
   if ufw status | grep -q "$PORT/tcp"; then
     echo "✅ UFW rule found for $PORT/tcp"
   else
@@ -65,7 +67,7 @@ fi
 echo ""
 echo "6) OCA modules present in custom-addons:"
 if [ -d "$CUSTOM_ADDONS" ]; then
-  find "$CUSTOM_ADDONS" -maxdepth 2 -type f -name "__manifest__.py" | sort | head -n 50
+  find "$CUSTOM_ADDONS" -maxdepth 2 -type f -name "__manifest__.py" | sort | head -n 100
 
   if [ -f "$CUSTOM_ADDONS/base_account_budget/__manifest__.py" ]; then
     echo "✅ base_account_budget detected"
@@ -80,6 +82,21 @@ if [ -d "$CUSTOM_ADDONS" ]; then
   fi
 else
   echo "❌ Directory not found: $CUSTOM_ADDONS"
+fi
+
+echo ""
+echo "7) Odoo Master Password (admin_passwd):"
+if [ -f "$CONF" ]; then
+  ADMIN_PASSWD=$(grep -E "^\s*admin_passwd\s*=" "$CONF" | cut -d'=' -f2 | xargs || true)
+  if [ -n "$ADMIN_PASSWD" ]; then
+    echo "✅ Master password found:"
+    echo "   admin_passwd = $ADMIN_PASSWD"
+    echo "   (Stored in $CONF)"
+  else
+    echo "⚠️ admin_passwd not set in $CONF"
+  fi
+else
+  echo "❌ Config not found: $CONF"
 fi
 
 echo ""

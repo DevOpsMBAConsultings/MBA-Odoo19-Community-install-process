@@ -24,7 +24,6 @@ apt install -y \
   libatlas-base-dev \
   libffi-dev \
   libssl-dev \
-  libzip-dev \
   qml-module-qtquick2 \
   qml-module-qtquick-controls \
   qml-module-qtquick-layouts

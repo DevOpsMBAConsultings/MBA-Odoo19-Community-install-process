@@ -2,10 +2,6 @@
 set -e
 
 ODOO_CONF="/etc/odoo19.conf"
-TEMPLATE="/opt/odoo/odoo19-community-installer/config/odoo19.conf.template"
-
-# When repo is cloned, it will live somewhere else.
-# So we derive template path from current script location:
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TEMPLATE="$SCRIPT_DIR/config/odoo19.conf.template"
 
@@ -16,8 +12,12 @@ if [ ! -f "$TEMPLATE" ]; then
   exit 1
 fi
 
-# Generate a strong default admin password if not provided
-ADMIN_PASSWD=$(openssl rand -hex 16)
+# Use provided admin passwd or generate secure random one
+if [ -n "$ODOO_ADMIN_PASSWD" ]; then
+  ADMIN_PASSWD="$ODOO_ADMIN_PASSWD"
+else
+  ADMIN_PASSWD=$(openssl rand -hex 16)
+fi
 
 sed "s/{{ADMIN_PASSWD}}/$ADMIN_PASSWD/g" "$TEMPLATE" > "$ODOO_CONF"
 

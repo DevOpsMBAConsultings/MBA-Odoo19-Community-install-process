@@ -6,6 +6,12 @@ SERVICE="odoo19"
 PORT="8069"
 CUSTOM_ADDONS="/opt/odoo/custom-addons"
 
+# Try to detect Odoo venv python from config, fallback to known path
+VENV_PY="$(grep -E '^\s*python3\s*=' "$CONF" 2>/dev/null | cut -d'=' -f2 | xargs || true)"
+if [ -z "$VENV_PY" ]; then
+  VENV_PY="/opt/odoo/odoo19/venv/bin/python3"
+fi
+
 echo "==================================="
 echo " ✅ Post-Install Health Check (Odoo 19)"
 echo " Time: $(date)"
@@ -97,6 +103,23 @@ if [ -f "$CONF" ]; then
   fi
 else
   echo "❌ Config not found: $CONF"
+fi
+
+echo ""
+echo "8) Python dependency checks (Odoo venv):"
+echo "Using Python: $VENV_PY"
+if [ -x "$VENV_PY" ]; then
+  if "$VENV_PY" -c "import qifparse" >/dev/null 2>&1; then
+    echo "✅ qifparse is installed (required by base_accounting_kit)"
+  else
+    echo "❌ qifparse is MISSING (required by base_accounting_kit)"
+    echo "   Fix:"
+    echo "   sudo /opt/odoo/odoo19/venv/bin/pip install qifparse"
+    echo "   sudo systemctl restart $SERVICE"
+  fi
+else
+  echo "❌ Odoo venv python not found/executable at: $VENV_PY"
+  echo "   Check your odoo config python3= setting in $CONF"
 fi
 
 echo ""

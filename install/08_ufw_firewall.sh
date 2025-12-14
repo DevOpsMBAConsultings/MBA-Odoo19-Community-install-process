@@ -18,7 +18,7 @@ ufw allow 80/tcp
 ufw allow 443/tcp
 
 # Optional: Uncomment to allow direct Odoo access without reverse proxy
-# ufw allow 8069/tcp
+ufw allow 8069/tcp
 
 if ufw status | grep -q "Status: active"; then
   echo "UFW already enabled."

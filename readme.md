@@ -61,4 +61,4 @@ sudo apt update -y && sudo apt install -y git
 git clone https://github.com/DevOpsMBAConsultings/MBA-Odoo19-Community-install-process.git
 cd MBA-Odoo19-Community-install-process
 chmod +x install.sh install/*.sh scripts/*.sh
-sudo ./install.sh
+sudo ALLOW_ODOO_PORT=1 ./install.sh

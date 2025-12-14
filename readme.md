@@ -37,7 +37,20 @@ All sensitive values are defined locally on each server.
 Maintained by **MBA Consultings**  
 https://mbaconsultings.com
 
-## ✅ Install (Ubuntu 24.04)
+## ✅ Install (Ubuntu 24.04) with port 8069 closed
+
+---
+
+Run the following commands on a **fresh Ubuntu 24.04 server**:
+
+```bash
+sudo apt update -y && sudo apt install -y git
+git clone https://github.com/DevOpsMBAConsultings/MBA-Odoo19-Community-install-process.git
+cd MBA-Odoo19-Community-install-process
+chmod +x install.sh install/*.sh scripts/*.sh
+sudo ./install.sh
+
+## ✅ Install (Ubuntu 24.04) with port 8069 open
 
 ---
 

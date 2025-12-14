@@ -35,13 +35,28 @@ for zip in "$ZIP_DIR"/*.zip; do
 
   for sub in "$TMP_DIR"/*; do
     [ -d "$sub" ] || continue
-    echo "➡️ Moving addon directory: $(basename "$sub")"
-    mv "$sub" "$TARGET_DIR"/
+    DEST="$TARGET_DIR/$(basename "$sub")"
+    echo "➡️ Installing addon dir: $(basename "$sub")"
+
+    # Replace if exists (clean + deterministic)
+    rm -rf "$DEST"
+    mv "$sub" "$DEST"
   done
 done
 
+rm -rf "$TMP_DIR"
+
 echo "🔐 Setting permissions…"
 chown -R $ODOO_USER:$ODOO_USER "$TARGET_DIR"
+
+echo "🔎 Verifying manifests found in $TARGET_DIR..."
+find "$TARGET_DIR" -maxdepth 2 -type f -name "__manifest__.py" | sort
+
+# Optional hard check (recommended for your use-case)
+if ! find "$TARGET_DIR" -maxdepth 2 -type f -name "__manifest__.py" | grep -q "/base_accounting_kit/__manifest__.py"; then
+  echo "❌ base_accounting_kit not found after extraction."
+  exit 1
+fi
 
 echo "🔄 Restarting Odoo…"
 systemctl restart odoo19
@@ -49,7 +64,7 @@ systemctl restart odoo19
 if systemctl is-active --quiet odoo19; then
   echo "✅ Odoo19 service is running"
 else
-  echo "⚠️ Odoo19 did not start — check logs"
+  echo "⚠️ Odoo19 did not start — check logs: sudo journalctl -u odoo19 -n 200 --no-pager"
 fi
 
 echo "✅ OCA ZIP addons installed in /opt/odoo/custom-addons"

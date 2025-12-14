@@ -5,6 +5,8 @@ echo "Installing system dependencies..."
 
 apt install -y \
   git \
+  wget \
+  unzip \
   python3 \
   python3-pip \
   python3-dev \

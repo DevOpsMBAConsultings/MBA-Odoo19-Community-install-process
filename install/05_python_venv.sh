@@ -26,4 +26,7 @@ fi
 echo "Installing Odoo Python dependencies…"
 sudo -u $ODOO_USER "$VENV_DIR/bin/pip" install -r "$ODOO_SRC/requirements.txt"
 
+echo "Installing extra Python deps for custom addons (OCA / community modules)..."
+sudo -u $ODOO_USER $VENV_DIR/bin/pip install qifparse
+
 echo "Python virtual environment and requirements installed."

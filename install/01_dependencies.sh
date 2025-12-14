@@ -24,7 +24,6 @@ apt install -y \
   libatlas-base-dev \
   libffi-dev \
   libssl-dev \
-  wkhtmltopdf \
   libzip-dev \
   qml-module-qtquick2 \
   qml-module-qtquick-controls \

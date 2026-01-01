@@ -22,3 +22,7 @@ venv/
 .DS_Store
 .idea/
 .vscode/
+
+# Digifact test artifacts (generated)
+digifact/test/nuc_work.xml
+digifact/test/response.json

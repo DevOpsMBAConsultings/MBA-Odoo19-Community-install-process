@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Root>
+    <Version>1.00</Version>
+    <CountryCode>PA</CountryCode>
+    <Header>
+        <DocType>01</DocType> <!-- iDoc -->
+        <IssuedDateTime>2026-01-01T18:01:06-05:00</IssuedDateTime> <!-- dFechaEm -->
+        <AdditionalIssueType>2</AdditionalIssueType> <!-- iAmb -->
+        <AdditionalIssueDocInfo>
+            <Info Name="TipoEmision" Value="01"/>               <!-- iTpEmis -->
+            <Info Name="NumeroDF" Value="0000000003"/>       <!-- dNroDF -->
+            <Info Name="PtoFactDF" Value="001"/>                <!-- dPtoFacDF -->
+            <Info Name="CodigoSeguridad" Value="766651620"/>    <!-- dSeg -->
+            <Info Name="NaturalezaOperacion" Value="01"/>       <!-- iNatOp -->
+            <Info Name="TipoOperacion" Value="1"/>              <!-- iTipoOp -->
+            <Info Name="DestinoOperacion" Value="1"/>           <!-- iDest -->
+            <Info Name="FormatoGeneracion" Value="1"/>          <!-- iFormCAFE -->
+            <Info Name="ManeraEntrega" Value="1"/>              <!-- iEntCAFE -->
+            <Info Name="EnvioContenedor" Value="1"/>            <!-- dEnvFE -->
+            <Info Name="ProcesoGeneracion" Value="1"/>          <!-- iProGen -->
+            <Info Name="TipoTransaccion" Value="1"/>            <!-- iTipoTranVenta -->
+            <Info Name="TipoSucursal" Value="2"/>               <!-- iTipoSuc -->
+        </AdditionalIssueDocInfo>
+    </Header>
+    <Seller>
+        <TaxID>155704849-2-2021</TaxID>
+        <TaxIDType>2</TaxIDType>
+        <TaxIDAdditionalInfo>
+            <Info Name="DigitoVerificador" Value="32" /> <!-- dDV -->
+        </TaxIDAdditionalInfo>
+        <Name>FE generada en ambiente de pruebas - sin valor comercial ni fiscal</Name> <!-- dNombEm -->
+        <Contact>
+            <PhoneList>
+                <Phone>997-8242</Phone>
+            </PhoneList>
+        </Contact>
+        <BranchInfo> <!-- obligatoria! -->
+            <Code>0001</Code> <!-- dSucEm -->
+            <Name>FE generada en ambiente de pruebas - sin valor comercial ni fiscal</Name>
+            <AddressInfo>
+                <Address>Blv Costa del Este,PH Financial Tower Piso 17</Address> <!-- dDirecEm -->
+                <City>Bocas del Toro (Cabecera)</City>
+                <District>Bocas del Toro</District>
+                <State>Bocas del Toro</State>
+                <Country>PA</Country>
+            </AddressInfo>
+            <AdditionalBranchInfo>
+                <Info Name="CoordEm" Value="+8.9892,-79.5201"/>
+                <Info Name="CodUbi" Value="2-2-9"/>
+            </AdditionalBranchInfo>
+        </BranchInfo>
+    </Seller>
+    <Buyer>
+        <TaxID>CF</TaxID>
+        <TaxIDAdditionalInfo>
+            <Info Name="TipoReceptor" Value="02"/>      <!-- iTipoRec -->
+            <Info Name="CodUbi" Value="1-1-1"/>        <!-- dCodUbi -->
+        </TaxIDAdditionalInfo>
+        <AdditionlInfo>
+            <Info Name="PaisReceptorFE" Value="PA"/>    <!-- cPaisRec-->
+        </AdditionlInfo>
+        <AddressInfo>
+            <Address>Westland Mall, Vista Alegre, Arraijan</Address> <!-- dDirecRec -->
+            <City>Bocas del Toro (Cabecera)</City>
+            <District>Bocas del Toro</District>
+            <State>Bocas del Toro</State>
+            <Country>PA</Country>
+        </AddressInfo>
+    </Buyer>
+    <Items>
+        <Item>
+            <Codes>
+                <Code Name="CodigoProd" Value="1234567890"></Code>
+                <!-- <Code Data="UnidadCPBS" Value="cm"/> -->
+                <Code Name="CodCPBSabr" Value="13"></Code>
+            </Codes>
+            <Description>ITEM</Description> <!-- dDescProd -->
+            <Qty>1.00</Qty> <!-- dCantCodInt -->
+            <UnitOfMeasure>m</UnitOfMeasure> <!-- cUnidad -->
+            <Price>1.000000</Price> <!-- dPrUnit -->
+            <Taxes> <!-- opcional -->
+                <Tax>
+                    <Code>00</Code> <!-- 15% de impuesto -->
+                    <Description>ITBMS</Description> <!-- gITBMSItem -->
+                    <Amount>0.00</Amount>
+                </Tax>
+            </Taxes>
+            <Charges> <!-- opcional -->
+                <Charge>
+                    <Amount>1.01</Amount>
+                </Charge>
+            </Charges>
+            <Totals> <!-- obligatorio -->
+                <TotalBTaxes>1.00000</TotalBTaxes>
+                <TotalWTaxes>1.00000</TotalWTaxes>
+                <SpecificTotal>2.010000</SpecificTotal>   
+                <TotalItem>2.010000</TotalItem>           <!-- dValTotItem -->
+            </Totals>
+        </Item>
+    </Items>
+    <Totals>
+        <QtyItems>1</QtyItems> <!-- dNroItems -->
+        <GrandTotal>
+            <TotalBTaxes>2.01</TotalBTaxes>
+            <TotalWTaxes>2.01</TotalWTaxes>
+            <InvoiceTotal>2.01</InvoiceTotal> <!-- dVTotItems --> 
+        </GrandTotal>
+    </Totals>
+    <Payments>
+        <Payment>
+            <Type>01</Type> <!-- iFormaPago -->
+            <Amount>2.01</Amount> <!-- dVlrCuota -->
+        </Payment>
+    </Payments>
+    <AdditionalDocumentInfo>
+        <AdditionalInfo>
+            <AditionalInfo>
+                <Info Name="TiempoPago" Value="1"/> <!-- iPzPago -->
+            </AditionalInfo>
+        </AdditionalInfo>
+        <!-- ADENDA -->
+        <AdditionalInfo>
+            <Code>1KS222K33-12-1222-ASFSSA</Code> <!-- NUMERO DE REFERENCIA FISCAL-->
+            <Type>ADENDA</Type>
+            <AditionalData>
+                <Data Name="INFORMACION_ADICIONAL">
+                    <Info Name="OBSERVACIONES" Value="-"/>
+                    <Info Name="CANTIDAD_LETRAS" Value="DOS DOLARES CON 01/100"/>
+                    <Info Name="DATO1" Value="Informcion del dato 1"/>
+                    <Info Name="DATO2" Value="Informacion del dato 2 de la factura :o"/>
+                </Data>
+                <Data Name="DetallesAux_Detalle">
+                    <Info Name="NumeroLinea" Value="1"/>
+                    <Info Name="Descripcion_Adicional" Value="-"/>
+                    <Info Name="CodigoEAN" Value="000001"/>
+                    <Info Name="CategoriaAdicional" Value="-"/>
+                    <Info Name="Textos" Value="Hola soy un texto 1"/>
+                    <Info Name="Textos" Value="Hola soy un texto 2"/>
+                    <Info Name="Textos" Value="Hola soy un texto 3"/>
+                </Data>
+            </AditionalData>
+            <AditionalInfo>
+                <Info Name="VALIDAR_REFERENCIA_INTERNA" Value="NO_VALIDAR"/> <!-- VALIDAR FECHA DE REFERENCIA INTERNA-->
+            </AditionalInfo>
+        </AdditionalInfo>
+    </AdditionalDocumentInfo>
+</Root>

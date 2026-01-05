@@ -51,6 +51,7 @@ chmod +x install.sh install/*.sh scripts/*.sh
 sudo ./install.sh
 
 ## ✅ Install (Ubuntu 24.04) with port 8069 open
+```
 
 ---
 

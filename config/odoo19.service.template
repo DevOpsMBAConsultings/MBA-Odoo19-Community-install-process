@@ -1,14 +1,15 @@
 [Unit]
-Description=Odoo 19 Community
+Description=Odoo {{ODOO_VERSION}} Community
 After=network.target postgresql.service
 
 [Service]
 Type=simple
 User=odoo
 Group=odoo
-ExecStart=/opt/odoo/odoo19/venv/bin/python3 /opt/odoo/odoo19/odoo/odoo-bin -c /etc/odoo19.conf
+ExecStart=/opt/odoo/odoo{{ODOO_VERSION}}/venv/bin/python3 /opt/odoo/odoo{{ODOO_VERSION}}/odoo/odoo-bin -c /etc/odoo{{ODOO_VERSION}}.conf
 StandardOutput=journal+console
 Restart=always
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target

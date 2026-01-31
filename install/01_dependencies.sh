@@ -3,10 +3,13 @@ set -e
 
 echo "Installing system dependencies..."
 
+apt update -y
+
 apt install -y \
   git \
   wget \
   unzip \
+  openssl \
   python3 \
   python3-pip \
   python3-dev \
@@ -26,8 +29,16 @@ apt install -y \
   libatlas-base-dev \
   libffi-dev \
   libssl-dev \
+  fontconfig \
+  xfonts-75dpi \
+  xfonts-base \
+  nodejs \
+  npm \
   qml-module-qtquick2 \
   qml-module-qtquick-controls \
   qml-module-qtquick-layouts
+
+echo "Installing rtlcss (Odoo asset requirement)..."
+npm install -g rtlcss
 
 echo "Dependencies installed."

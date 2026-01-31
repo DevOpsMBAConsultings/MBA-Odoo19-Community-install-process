@@ -1,67 +1,47 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
-LOG_FILE="/var/log/odoo19-install.log"
+### ========= DEFAULTS =========
+DEFAULT_ODOO_VERSION="19"
+DEFAULT_HTTP_PORT="8069"
 
-echo "===================================" | tee -a "$LOG_FILE"
-echo " MBA Odoo Community Installer"       | tee -a "$LOG_FILE"
-echo " Started at: $(date)"               | tee -a "$LOG_FILE"
-echo "===================================" | tee -a "$LOG_FILE"
+### ========= PROMPTS =========
+read -rp "Odoo version to install [${DEFAULT_ODOO_VERSION}]: " ODOO_VERSION
+ODOO_VERSION="${ODOO_VERSION:-$DEFAULT_ODOO_VERSION}"
 
-if [[ $EUID -ne 0 ]]; then
-  echo "❌ Please run as root (sudo ./install.sh)" | tee -a "$LOG_FILE"
+read -rp "Domain name (e.g. erp.example.com): " DOMAIN
+if [[ -z "$DOMAIN" ]]; then
+  echo "ERROR: domain is required"
   exit 1
 fi
 
-# -------------------------
-# Version selection
-# -------------------------
-# Non-interactive default is 19. You can override:
-#   sudo ODOO_VERSION=18 ./install.sh
-if [ -z "${ODOO_VERSION:-}" ]; then
-  ODOO_VERSION="19"
+read -rp "Email for Let's Encrypt notifications: " EMAIL
+if [[ -z "$EMAIL" ]]; then
+  echo "ERROR: email is required"
+  exit 1
 fi
 
-# Optional interactive prompt only if running in a real TTY
-if [ -t 0 ] && [ -z "${ODOO_VERSION_SET_BY_USER:-}" ]; then
-  # If user explicitly sets ODOO_VERSION, we do not prompt.
-  if [ "${ODOO_VERSION:-}" = "19" ]; then
-    read -r -p "Enter Odoo major version to install [default: 19]: " INPUT_VER || true
-    if [ -n "${INPUT_VER:-}" ]; then
-      ODOO_VERSION="$INPUT_VER"
-    fi
-  fi
-fi
-
-# Standardize database name per version
-DB_NAME="odoo${ODOO_VERSION}"
-
+### ========= EXPORTS =========
 export ODOO_VERSION
-export DB_NAME
+export DOMAIN
+export EMAIL
+export ODOO_USER="odoo"
+export ODOO_HOME="/opt/odoo/odoo${ODOO_VERSION}"
+export DB_NAME="odoo${ODOO_VERSION}"
+export HTTP_PORT="${DEFAULT_HTTP_PORT}"
 
-echo "▶ Target: Odoo ${ODOO_VERSION} | Database: ${DB_NAME}" | tee -a "$LOG_FILE"
+### ========= EXECUTION =========
+echo ">>> Installing system dependencies"
+bash install/01-system.sh
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+echo ">>> Installing Odoo ${ODOO_VERSION}"
+bash install/02-odoo.sh
 
-# -------------------------
-# Install steps
-# -------------------------
-for script in $(ls -1 "$SCRIPT_DIR"/install/*.sh 2>/dev/null | sort); do
-  echo "▶ Running $script" | tee -a "$LOG_FILE"
-  bash "$script" 2>&1 | tee -a "$LOG_FILE"
-done
+echo ">>> Installing & configuring Nginx"
+bash install/03-nginx.sh
 
-# -------------------------
-# Post-install checks
-# -------------------------
-POST_DIR="$SCRIPT_DIR/post"
-if [ -d "$POST_DIR" ]; then
-  for script in $(ls -1 "$POST_DIR"/*.sh 2>/dev/null | sort); do
-    echo "▶ Running $script" | tee -a "$LOG_FILE"
-    bash "$script" 2>&1 | tee -a "$LOG_FILE"
-  done
-fi
-
-echo "===================================" | tee -a "$LOG_FILE"
-echo " ✅ Odoo install + checks completed" | tee -a "$LOG_FILE"
-echo "===================================" | tee -a "$LOG_FILE"
+echo
+echo "========================================"
+echo "Odoo ${ODOO_VERSION} installation done"
+echo "URL: https://${DOMAIN}"
+echo "========================================"

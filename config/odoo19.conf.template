@@ -1,18 +1,18 @@
 [options]
 admin_passwd = {{ADMIN_PASSWD}}
 
-db_host = False
-db_port = False
+db_host = 127.0.0.1
+db_port = 5432
 db_user = odoo
-db_password = False
+db_password = {{DB_PASSWORD}}
 
-; Force a deterministic default database name
 db_name = {{DB_NAME}}
 
 addons_path = /opt/odoo/odoo{{ODOO_VERSION}}/odoo/addons,/opt/odoo/custom-addons
+
+data_dir = /var/lib/odoo
 logfile = /var/log/odoo/odoo{{ODOO_VERSION}}.log
 
-xmlrpc_port = 8069
-longpolling_port = 8072
-
 proxy_mode = True
+http_interface = 127.0.0.1
+http_port = 8069

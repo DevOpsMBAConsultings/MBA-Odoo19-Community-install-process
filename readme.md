@@ -1,65 +1,23 @@
-# MBA – Odoo 19 Community Install Process
+---
 
-This repository contains a **standardized, repeatable installation process**
-for **Odoo 19 Community** on **Ubuntu 24.04**.
+## 🔐 Firewall & port behavior
 
-## 🎯 Objective
+By default:
+- **Port 8069 is NOT exposed publicly**
+- Odoo is accessed through **Nginx (port 80 / 443)**
 
-- Install Odoo 19 Community in a clean, controlled way
-- Make the process reusable for:
-  - Oracle Cloud
-  - Local servers
-  - Customer environments
-- Reduce installation time from hours to minutes
-- Avoid configuration drift and manual errors
-
-## 🧱 What this repo provides
-
-- Step-by-step install scripts
-- Configuration templates
-- Systemd service setup
-- Optional Nginx + SSL support
-- A structure designed for DevOps reuse
-
-## 🚀 Target audience
-
-- MBA Consultings internal team
-- DevOps / ERP implementations
-- Small & medium businesses using Odoo Community
-
-## ⚠️ Important
-
-This repository **does NOT store passwords or secrets**.  
-All sensitive values are defined locally on each server.
+If you explicitly want port `8069` open:
+- Use the environment flag `ALLOW_ODOO_PORT=1`
 
 ---
 
-Maintained by **MBA Consultings**  
-https://mbaconsultings.com
+## 🚀 Installation (Ubuntu 24.04)
 
-## ✅ Install (Ubuntu 24.04) with port 8069 closed
-
----
-
-Run the following commands on a **fresh Ubuntu 24.04 server**:
+### Default install (recommended – port 8069 closed)
 
 ```bash
 sudo apt update -y && sudo apt install -y git
 git clone https://github.com/DevOpsMBAConsultings/MBA-Odoo19-Community-install-process.git
 cd MBA-Odoo19-Community-install-process
-chmod +x install.sh install/*.sh scripts/*.sh
+chmod +x install.sh install/*.sh post/*.sh
 sudo ./install.sh
-
-## ✅ Install (Ubuntu 24.04) with port 8069 open
-```
-
----
-
-Run the following commands on a **fresh Ubuntu 24.04 server**:
-
-```bash
-sudo apt update -y && sudo apt install -y git
-git clone https://github.com/DevOpsMBAConsultings/MBA-Odoo19-Community-install-process.git
-cd MBA-Odoo19-Community-install-process
-chmod +x install.sh install/*.sh scripts/*.sh
-sudo ALLOW_ODOO_PORT=1 ./install.sh

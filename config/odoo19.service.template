@@ -1,15 +1,25 @@
 [Unit]
 Description=Odoo {{ODOO_VERSION}} Community
 After=network.target postgresql.service
+Wants=postgresql.service
 
 [Service]
 Type=simple
-User=odoo
-Group=odoo
-ExecStart=/opt/odoo/odoo{{ODOO_VERSION}}/venv/bin/python3 /opt/odoo/odoo{{ODOO_VERSION}}/odoo/odoo-bin -c /etc/odoo{{ODOO_VERSION}}.conf
-StandardOutput=journal+console
+User={{ODOO_USER}}
+Group={{ODOO_USER}}
+
+# Odoo
+ExecStart={{ODOO_HOME}}/venv/bin/python3 {{ODOO_HOME}}/odoo/odoo-bin -c /etc/odoo{{ODOO_VERSION}}.conf
+
+# Hardening / stability
 Restart=always
 RestartSec=3
+KillMode=mixed
+TimeoutStopSec=30
+
+# Logs go to journal (you also have logfile in odoo.conf)
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target

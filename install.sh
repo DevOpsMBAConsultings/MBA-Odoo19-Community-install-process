@@ -1,47 +1,42 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-### ========= DEFAULTS =========
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 DEFAULT_ODOO_VERSION="19"
-DEFAULT_HTTP_PORT="8069"
 
-### ========= PROMPTS =========
-read -rp "Odoo version to install [${DEFAULT_ODOO_VERSION}]: " ODOO_VERSION
+read -r -p "Odoo version to install [${DEFAULT_ODOO_VERSION}]: " ODOO_VERSION
 ODOO_VERSION="${ODOO_VERSION:-$DEFAULT_ODOO_VERSION}"
 
-read -rp "Domain name (e.g. erp.example.com): " DOMAIN
-if [[ -z "$DOMAIN" ]]; then
-  echo "ERROR: domain is required"
-  exit 1
-fi
+read -r -p "Domain name (e.g. erp.example.com): " DOMAIN_NAME
+read -r -p "Email for Let's Encrypt notifications: " LE_EMAIL
 
-read -rp "Email for Let's Encrypt notifications: " EMAIL
-if [[ -z "$EMAIL" ]]; then
-  echo "ERROR: email is required"
-  exit 1
-fi
-
-### ========= EXPORTS =========
 export ODOO_VERSION
-export DOMAIN
-export EMAIL
-export ODOO_USER="odoo"
-export ODOO_HOME="/opt/odoo/odoo${ODOO_VERSION}"
-export DB_NAME="odoo${ODOO_VERSION}"
-export HTTP_PORT="${DEFAULT_HTTP_PORT}"
+export DOMAIN_NAME
+export LE_EMAIL
 
-### ========= EXECUTION =========
-echo ">>> Installing system dependencies"
-bash install/01-system.sh
+run() {
+  local f="$1"
+  echo "▶ Running $f"
+  bash "$f"
+  echo
+}
 
-echo ">>> Installing Odoo ${ODOO_VERSION}"
-bash install/02-odoo.sh
+run "$ROOT_DIR/install/00_system_update.sh"
+run "$ROOT_DIR/install/01_dependencies.sh"
+run "$ROOT_DIR/install/02_postgres.sh"
+run "$ROOT_DIR/install/03_odoo_user_and_folders.sh"
+run "$ROOT_DIR/install/04_clone_odoo.sh"
+run "$ROOT_DIR/install/05_python_venv.sh"
+run "$ROOT_DIR/install/06_python_dependencies.sh"
+run "$ROOT_DIR/install/07_odoo_config.sh"
+run "$ROOT_DIR/install/07_systemd_service.sh"
+run "$ROOT_DIR/install/07b_init_database.sh"
+run "$ROOT_DIR/install/08_ufw_firewall.sh"
+run "$ROOT_DIR/install/09_install_oca_zips.sh"
+run "$ROOT_DIR/install/10_nginx.sh"
 
-echo ">>> Installing & configuring Nginx"
-bash install/03-nginx.sh
+run "$ROOT_DIR/post/00_health_check.sh"
+run "$ROOT_DIR/post/10_summary.sh"
 
-echo
-echo "========================================"
-echo "Odoo ${ODOO_VERSION} installation done"
-echo "URL: https://${DOMAIN}"
-echo "========================================"
+echo "✅ Odoo 19 Community installation completed."

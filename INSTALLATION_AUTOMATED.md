@@ -1,0 +1,305 @@
+# Automated Installation Guide - Digifact Modules
+
+Quick guide for installing Digifact modules after using the automated Odoo 19 installation script.
+
+**Repository:** [MBA-Odoo19-Community-install-process](https://github.com/DevOpsMBAConsultings/MBA-Odoo19-Community-install-process/tree/v2)
+
+---
+
+## Prerequisites
+
+- Fresh Ubuntu 24.04 server
+- Root or sudo access
+- Domain name (for SSL certificate)
+- Email address (for Let's Encrypt)
+
+---
+
+## Step 1: Run Automated Odoo Installation
+
+```bash
+sudo apt update -y && sudo apt install -y git
+git clone https://github.com/DevOpsMBAConsultings/MBA-Odoo19-Community-install-process.git
+cd MBA-Odoo19-Community-install-process
+chmod +x install.sh install/*.sh post/*.sh
+sudo ./install.sh
+```
+
+### What You'll Be Asked
+
+1. **Odoo version:** Press Enter (defaults to 19)
+2. **Domain name:** Enter your domain (e.g., `erp.yourcompany.com`)
+3. **Let's Encrypt email:** Enter your email address
+
+### What It Installs
+
+- ✅ All system dependencies
+- ✅ PostgreSQL 14+
+- ✅ Odoo 19 Community Edition
+- ✅ Python 3.10+ with virtual environment
+- ✅ wkhtmltopdf (patched version)
+- ✅ Nginx reverse proxy
+- ✅ Let's Encrypt SSL certificate
+- ✅ Firewall configuration
+- ✅ Systemd service
+
+### After Installation
+
+- **Odoo URL:** `https://your-domain.com`
+- **Master Password:** Displayed at the end (SAVE IT!)
+- **Database:** `odoo19` (auto-created)
+- **Custom Addons Path:** `/opt/odoo/custom-addons`
+
+---
+
+## Step 2: Install Digifact Modules
+
+### 2.1 Clone the Modules
+
+```bash
+sudo su - odoo
+cd /opt/odoo/custom-addons
+
+# Clone the base module (company configuration)
+git clone <repository-url>/l10n_pa_edi_digifact_company.git
+
+# Clone the main module
+git clone <repository-url>/l10n_pa_edi_digifact.git
+
+# Verify modules are cloned
+ls -la
+exit
+```
+
+**Replace `<repository-url>` with your actual repository URL.**
+
+### 2.2 Install Python Dependencies
+
+```bash
+sudo su - odoo
+source /opt/odoo/odoo19/venv/bin/activate
+pip install requests
+exit
+```
+
+### 2.3 Restart Odoo
+
+```bash
+sudo systemctl restart odoo19
+```
+
+---
+
+## Step 3: Install Modules in Odoo
+
+1. **Access Odoo:**
+   - Open browser: `https://your-domain.com`
+   - Log in with admin credentials
+
+2. **Install Base Apps (if not already installed):**
+   - Go to **Apps** menu
+   - Remove "Apps" filter
+   - Install **Accounting** and **Sales** (if needed)
+
+3. **Install Digifact Modules (in order):**
+   - Go to **Apps** menu
+   - Remove "Apps" filter
+   - Search for "Panama" or "Digifact"
+   - **First:** Install `l10n_pa_edi_digifact_company` (Panama EDI – Company FE Config)
+   - **Second:** Install `l10n_pa_edi_digifact` (Panama EDI Digifact)
+
+---
+
+## Step 4: Configure Company FE Settings
+
+1. Go to **Settings** → **Companies** → Select your company
+2. Navigate to **Facturación Electrónica** tab
+3. Configure:
+
+### Company Identity
+- **RUC:** Your company RUC
+- **DV (DGI):** Click "Validate RUC" to auto-fill
+- **Código de la sucursal:** Branch code (e.g., `0001`)
+- **Punto de facturación:** Point of sale (e.g., `001`)
+
+### Location
+- **Provincia:** Select province
+- **Distrito:** Select district
+- **Corregimiento:** Select corregimiento
+- **Coordenadas Sucursal:** GPS coordinates (e.g., `+8.9213,-79.7068`)
+
+### Digifact Credentials
+- **Usuario Digifact:** Your Digifact username
+- **Password Digifact:** Your Digifact password
+
+### Environment
+- **Digifact Api Base Url Mode:** 
+  - `Sandbox` for testing
+  - `Production` for live
+- **Digifact Timeout:** 75 seconds (default)
+
+4. **Test Connection:**
+   - Click "Test PAC Connection"
+   - Should show success
+
+5. **Get Token:**
+   - Click "Get PAC Token"
+   - Token stored automatically
+
+6. **Save** configuration
+
+---
+
+## Step 5: Verify Installation
+
+### Check Odoo Service
+
+```bash
+sudo systemctl status odoo19
+```
+
+### Check Logs
+
+```bash
+sudo tail -f /var/log/odoo/odoo19.log
+```
+
+### Test Invoice Creation
+
+1. Create a test customer with FE fields
+2. Create a test invoice
+3. Reserve fiscal number
+4. Post invoice
+5. Send to Digifact (in sandbox mode)
+
+---
+
+## Directory Structure
+
+After installation, your structure should be:
+
+```
+/opt/odoo/
+├── odoo19/
+│   ├── odoo/          # Odoo source code
+│   └── venv/          # Python virtual environment
+├── custom-addons/
+│   ├── l10n_pa_edi_digifact_company/
+│   └── l10n_pa_edi_digifact/
+└── oca/               # OCA modules (if installed)
+```
+
+---
+
+## Configuration Files
+
+- **Odoo Config:** `/etc/odoo19.conf`
+- **Systemd Service:** `/etc/systemd/system/odoo19.service`
+- **Nginx Config:** `/etc/nginx/sites-available/odoo19`
+- **Logs:** `/var/log/odoo/odoo19.log`
+
+---
+
+## Useful Commands
+
+### Service Management
+
+```bash
+# Start Odoo
+sudo systemctl start odoo19
+
+# Stop Odoo
+sudo systemctl stop odoo19
+
+# Restart Odoo
+sudo systemctl restart odoo19
+
+# Check Status
+sudo systemctl status odoo19
+
+# View Logs
+sudo journalctl -u odoo19 -f
+```
+
+### Module Management
+
+```bash
+# Upgrade module (from command line)
+sudo -u odoo /opt/odoo/odoo19/venv/bin/python3 /opt/odoo/odoo19/odoo/odoo-bin -c /etc/odoo19.conf -d odoo19 -u l10n_pa_edi_digifact --stop-after-init
+sudo systemctl start odoo19
+```
+
+### Health Check
+
+The automated installation includes a health check script:
+
+```bash
+cd /path/to/MBA-Odoo19-Community-install-process
+sudo ./post/00_health_check.sh
+```
+
+---
+
+## Troubleshooting
+
+### Module Not Found
+
+**Check addons path:**
+```bash
+grep addons_path /etc/odoo19.conf
+```
+
+Should include: `/opt/odoo/custom-addons`
+
+**Restart Odoo:**
+```bash
+sudo systemctl restart odoo19
+```
+
+### Import Errors
+
+**Install missing dependencies:**
+```bash
+sudo su - odoo
+source /opt/odoo/odoo19/venv/bin/activate
+pip install requests
+exit
+sudo systemctl restart odoo19
+```
+
+### API Connection Issues
+
+**Test connectivity:**
+```bash
+curl https://testnucpa.digifact.com/api/login/get_token
+```
+
+**Check firewall:**
+```bash
+sudo ufw status
+```
+
+**Verify credentials** in company settings.
+
+---
+
+## Next Steps
+
+1. ✅ Complete company FE configuration
+2. ✅ Test invoice creation and fiscal number reservation
+3. ✅ Test Digifact submission in sandbox
+4. ✅ Switch to production environment when ready
+5. ✅ Train users on FE workflow
+
+---
+
+## Related Documentation
+
+- **Full Installation Guide:** `INSTALLATION_GUIDE.md`
+- **Quick Start:** `QUICK_START.md`
+- **API Reference:** `DIGIFACT_API_REFERENCE.md`
+- **NUC XML Examples:** `NUC_XML_EXAMPLES_REFERENCE.md`
+
+---
+
+**Automated Installation Script:** [MBA-Odoo19-Community-install-process](https://github.com/DevOpsMBAConsultings/MBA-Odoo19-Community-install-process/tree/v2)

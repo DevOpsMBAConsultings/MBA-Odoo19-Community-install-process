@@ -1,0 +1,75 @@
+#!/bin/bash
+set -e
+
+ODOO_USER="odoo"
+TARGET_DIR="/opt/odoo/custom-addons"
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ZIP_DIR="$SCRIPT_DIR/assets/oca-zips"
+TMP_DIR="/tmp/oca_zip_extract"
+
+echo "Installing OCA addons from ZIP files into custom-addons…"
+
+# Ensure unzip is installed
+if ! command -v unzip >/dev/null 2>&1; then
+  echo "🔧 unzip missing — installing…"
+  apt update -y
+  apt install -y unzip
+fi
+
+mkdir -p "$TARGET_DIR"
+
+if [ ! -d "$ZIP_DIR" ]; then
+  echo "⚠️ ZIP directory not found: $ZIP_DIR"
+  echo "Skipping OCA ZIP installation."
+  exit 0
+fi
+
+for zip in "$ZIP_DIR"/*.zip; do
+  [ -e "$zip" ] || continue
+
+  echo "📦 Extracting $(basename "$zip")…"
+  rm -rf "$TMP_DIR"
+  mkdir -p "$TMP_DIR"
+
+  unzip -o "$zip" -d "$TMP_DIR"
+
+  for sub in "$TMP_DIR"/*; do
+    [ -d "$sub" ] || continue
+    # Skip non-addon dirs (e.g. __MACOSX from Mac-created zips)
+    [ -f "$sub/__manifest__.py" ] || continue
+    DEST="$TARGET_DIR/$(basename "$sub")"
+    echo "➡️ Installing addon dir: $(basename "$sub")"
+
+    # Replace if exists (clean + deterministic)
+    rm -rf "$DEST"
+    mv "$sub" "$DEST"
+  done
+done
+
+rm -rf "$TMP_DIR"
+
+echo "🔐 Setting permissions…"
+chown -R $ODOO_USER:$ODOO_USER "$TARGET_DIR"
+
+echo "🔎 Verifying manifests found in $TARGET_DIR..."
+find "$TARGET_DIR" -maxdepth 2 -type f -name "__manifest__.py" | sort
+
+# Verify at least one addon was installed (no hardcoded list — zips may be added/removed)
+MANIFEST_COUNT=$(find "$TARGET_DIR" -maxdepth 2 -type f -name "__manifest__.py" 2>/dev/null | wc -l)
+if [ "$MANIFEST_COUNT" -eq 0 ]; then
+  echo "❌ No addon manifests found in $TARGET_DIR after extraction."
+  exit 1
+fi
+echo "✅ Found $MANIFEST_COUNT addon(s) in custom-addons."
+
+echo "🔄 Restarting Odoo…"
+systemctl restart odoo19
+
+if systemctl is-active --quiet odoo19; then
+  echo "✅ Odoo19 service is running"
+else
+  echo "⚠️ Odoo19 did not start — check logs: sudo journalctl -u odoo19 -n 200 --no-pager"
+fi
+
+echo "✅ OCA ZIP addons installed in /opt/odoo/custom-addons"
+echo "Next: Update Apps List inside Odoo UI."

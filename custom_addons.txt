@@ -1,0 +1,32 @@
+# --- How to use this file ---
+#
+# 1. PUBLIC REPOS: Add the full 'https://' Git URL.
+#    Example: https://github.com/OCA/web.git
+#
+# 2. PRIVATE REPOS: Use the special 'your-github-token' placeholder in the URL.
+#    The script will automatically replace this with the token from 'config/key.txt'.
+#    Example: https://your-github-token@github.com/YourOrg/YourPrivateRepo.git
+#
+# 3. COMMENTS: Use '#' to comment out a line for a repository you want to skip.
+#
+# Each repository URL must be on its own line.
+# --- Add your repository URLs below ---
+
+# OCA (Odoo Community Association) Repositories
+# Note: OCA often groups modules. We clone the whole repository.
+# The 'depth=1' flag can be used to speed up cloning by only getting the latest version.
+# https://github.com/OCA/account-financial-reporting.git
+# https://github.com/OCA/product-attribute.git
+# https://github.com/OCA/web.git
+
+# Odoo Mates Repositories
+# https://github.com/Odoo-Mates/odoo_apps.git
+
+# Other third-party repositories
+# https://github.com/sttl-technologies/sttl_odoo_apps.git
+
+# Your custom public modules
+# https://github.com/your-org/mba_partner_phone_pa.git
+
+# Your private Golden Egg module for Panamanian electronic invoicing.
+# https://your-github-token@github.com/DevOpsMBAConsultings/facturacion_electronica.git

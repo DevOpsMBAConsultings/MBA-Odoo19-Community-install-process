@@ -1,0 +1,21 @@
+[options]
+admin_passwd = {{ADMIN_PASSWD}}
+
+db_host = False
+db_port = False
+db_user = odoo
+db_password = False
+db_name = {{DB_NAME}}
+
+dbfilter = ^{{DB_NAME}}$
+list_db = False
+
+addons_path = /opt/odoo/odoo{{ODOO_VERSION}}/odoo/addons,/opt/odoo/custom-addons
+
+data_dir = /var/lib/odoo
+logfile = /var/log/odoo/odoo{{ODOO_VERSION}}.log
+
+proxy_mode = True
+
+xmlrpc_port = 8069
+longpolling_port = 8072

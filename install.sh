@@ -86,7 +86,7 @@ ALLOW_ODOO_PORT="${ALLOW_ODOO_PORT:-0}"
 read -r -p "Odoo version to install [${DEFAULT_ODOO_VERSION}]: " ODOO_VERSION
 ODOO_VERSION="${ODOO_VERSION:-$DEFAULT_ODOO_VERSION}"
 
-while [[ -z "${DOMAIN}" ]]; do
+while [[ -z "${DOMAIN:-}" ]]; do
   read -r -p "Domain name (e.g. erp.example.com): " DOMAIN
   if [[ -z "${DOMAIN}" ]]; then
     # If running non-interactively, fail to avoid infinite loop
@@ -95,7 +95,7 @@ while [[ -z "${DOMAIN}" ]]; do
   fi
 done
 
-while [[ -z "${LETSENCRYPT_EMAIL}" ]]; do
+while [[ -z "${LETSENCRYPT_EMAIL:-}" ]]; do
   read -r -p "Email for Let's Encrypt notifications: " LETSENCRYPT_EMAIL
   if [[ -z "${LETSENCRYPT_EMAIL}" ]]; then
     if [[ ! -t 0 ]]; then echo "ERROR: LETSENCRYPT_EMAIL is required."; exit 1; fi

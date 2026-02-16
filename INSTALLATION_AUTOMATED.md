@@ -15,12 +15,31 @@ Quick guide for installing Digifact modules after using the automated Odoo 19 in
 
 ---
 
-## Step 1: Run Automated Odoo Installation
+## Step 1: Configure Custom Addons
+
+**Before running the installation**, you must add your repositories to `custom_addons.txt`.
 
 ```bash
+cd ~
+rm -rf MBA-Odoo19-Community-install-process
 sudo apt update -y && sudo apt install -y git
-git clone https://github.com/DevOpsMBAConsultings/MBA-Odoo19-Community-install-process.git
+git clone https://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@github.com/DevOpsMBAConsultings/MBA-Odoo19-Community-install-process.git
+```
+
+```bash
 cd MBA-Odoo19-Community-install-process
+```
+
+1. Edit `custom_addons.txt` and add your repository URLs:
+```text
+https://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@github.com/DevOpsMBAConsultings/facturacion_electronica.git
+```
+
+---
+
+## Step 2: Run Automated Odoo Installation
+
+```bash
 chmod +x install.sh install/*.sh post/*.sh
 sudo ./install.sh
 ```
@@ -90,7 +109,8 @@ sudo systemctl restart odoo19
 2. **Install Base Apps (if not already installed):**
    - Go to **Apps** menu
    - Remove "Apps" filter
-   - Install **Accounting** and **Sales** (if needed)
+   - Install **Invoicing** (Facturación) and **Sales** (if needed)
+   - Install **Invoicing** (Technical name: `account`) and **Sales** (`sale`)
 
 3. **Install Digifact Modules (in order):**
    - Go to **Apps** menu
@@ -216,7 +236,7 @@ sudo journalctl -u odoo19 -f
 
 ```bash
 # Upgrade module (from command line)
-sudo -u odoo /opt/odoo/odoo19/venv/bin/python3 /opt/odoo/odoo19/odoo/odoo-bin -c /etc/odoo19.conf -d odoo19 -u l10n_pa_edi_digifact --stop-after-init
+sudo -u odoo /opt/odoo/odoo19/venv/bin/python3 /opt/odoo/odoo19/odoo/odoo-bin -c /etc/odoo19.conf -d odoo19 -u facturacion_electronica --stop-after-init
 sudo systemctl start odoo19
 ```
 

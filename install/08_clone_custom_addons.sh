@@ -25,7 +25,7 @@ if [ ! -f "$ADDONS_FILE" ]; then
 fi
 
 # Determine GitHub token if a private repo is listed
-if grep -q "your-github-token" "$ADDONS_FILE" && [ -z "${GITHUB_TOKEN:-}" ]; then
+if grep -v '^[[:space:]]*#' "$ADDONS_FILE" | grep -q "your-github-token" && [ -z "${GITHUB_TOKEN:-}" ]; then
   KEY_FILE="$REPO_ROOT/config/token.txt"
   if [ -f "$KEY_FILE" ]; then
     # Read token from key file, ignoring comments and taking the last valid line
@@ -38,14 +38,9 @@ if grep -q "your-github-token" "$ADDONS_FILE" && [ -z "${GITHUB_TOKEN:-}" ]; the
 
   # If token is still not set, fall back to interactive prompt
   if [ -z "${GITHUB_TOKEN:-}" ]; then
-    echo ""
-    echo "A private repository is listed and no valid token was found in config/token.txt."
-    echo "Please provide a GitHub Personal Access Token with repo access."
-    read -s -p "Enter GitHub Token (input is hidden): " GITHUB_TOKEN
-    echo ""
-    if [ -z "$GITHUB_TOKEN" ]; then
-        echo "⚠️ No GitHub token provided. Cloning of private repositories will likely fail."
-    fi
+    echo "⚠️ 'your-github-token' placeholder detected but no token found in config/token.txt."
+    echo "   Repositories using the placeholder will be skipped."
+    echo "   (If you embedded the token in the URL directly, this warning can be ignored.)"
   fi
 fi
 
@@ -79,7 +74,7 @@ while IFS= read -r repo_url || [ -n "$repo_url" ]; do
   # Attempt to clone the specific Odoo version branch, fall back to default branch
   if ! git clone --depth 1 --branch "$ODOO_VERSION" "$repo_url" "$clone_path" 2>/dev/null; then
     echo "    Branch '$ODOO_VERSION' not found. Trying default branch..."
-    git clone --depth 1 "$repo_url" "$clone_path"
+    git clone --depth 1 "$repo_url" "$clone_path" || echo "❌ Failed to clone $repo_name. Skipping."
   fi
 
 done < "$ADDONS_FILE"

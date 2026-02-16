@@ -58,39 +58,60 @@ if [[ -n "${ODOO_EXTRA_MODULES}" ]]; then
   INIT_MODULES="${INIT_MODULES},${ODOO_EXTRA_MODULES}"
 fi
 
+# Reporting arrays
+declare -a R_TASK
+declare -a R_STATUS
+declare -a R_MSG
+
+record_result() {
+  R_TASK+=("$1")
+  R_STATUS+=("$2")
+  R_MSG+=("$3")
+}
+
 # Helper function to run post-install configuration scripts
 run_config_script() {
   local script_path="$1"
   local description="$2"
   local require_pa="${3:-0}" # 0=Always run, 1=Run only if COUNTRY_CODE is PA
+  local script_name="$(basename "${script_path}")"
 
   if [[ "${require_pa}" == "1" ]] && [[ "${COUNTRY_CODE}" != "PA" ]]; then
+    record_result "$script_name" "SKIPPED" "Country not PA"
     return 0
   fi
 
-  if [[ -f "${script_path}" ]]; then
-    echo "${description}"
-    local script_name
-    script_name="$(basename "${script_path}")"
-    # Use a unique temp name to avoid collisions
-    local run_path="/tmp/${script_name%.*}_odoo.py"
-    
-    sudo cp "${script_path}" "${run_path}"
-    sudo chown "${ODOO_USER}:${ODOO_USER}" "${run_path}"
-    
-    # Pass common env vars used by the python scripts
-    sudo -u "${ODOO_USER}" env \
+  if [[ ! -f "${script_path}" ]]; then
+    record_result "$script_name" "MISSING" "File not found"
+    return 0
+  fi
+
+  echo "${description}"
+  local run_path="/tmp/${script_name%.*}_odoo.py"
+  sudo cp "${script_path}" "${run_path}"
+  sudo chown "${ODOO_USER}:${ODOO_USER}" "${run_path}"
+
+  local log_file="/tmp/odoo_script_${script_name}.log"
+  set +e
+  sudo -u "${ODOO_USER}" env \
       ODOO_HOME="${ODOO_HOME}" \
       ODOO_CONF="${ODOO_CONF}" \
       DB_NAME="${DB_NAME}" \
       ODOO_COUNTRY_CODE="${COUNTRY_CODE}" \
-      "${ODOO_PY}" "${run_path}" || true
-      
-    sudo rm -f "${run_path}"
+      "${ODOO_PY}" "${run_path}" > "$log_file" 2>&1
+  local ret=$?
+  set -e
+
+  sudo rm -f "${run_path}"
+
+  if [[ $ret -eq 0 ]]; then
+    record_result "$script_name" "SUCCESS" ""
   else
-    # Optional: Debug output if script missing
-    :
+    local err_msg=$(grep -v "^$" "$log_file" | tail -n 1 | cut -c1-100)
+    record_result "$script_name" "FAILED" "$err_msg"
+    echo "⚠️  Failed: $script_name"
   fi
+  rm -f "$log_file"
 }
 
 echo "Initializing database '${DB_NAME}' for Odoo ${ODOO_VERSION}..."
@@ -129,15 +150,25 @@ if [[ "${INIT_OK}" == "1" ]]; then
     echo "Installing any missing modules: ${INIT_MODULES}..."
     echo "(If this step fails, see the Odoo error below; fix dependencies or remove problematic modules from custom-addons and re-run this script.)"
     sudo systemctl stop "${ODOO_SERVICE}" >/dev/null 2>&1 || true
-    if ! sudo -u "${ODOO_USER}" "${ODOO_PY}" "${ODOO_BIN}" \
+    
+    install_log="/tmp/odoo_install_update.log"
+    set +e
+    sudo -u "${ODOO_USER}" "${ODOO_PY}" "${ODOO_BIN}" \
       -c "${ODOO_CONF}" \
       -d "${DB_NAME}" \
       -i "${INIT_MODULES}" \
-      --stop-after-init; then
-      echo "ERROR: Module install failed. Check the output above for the Odoo traceback."
-      echo "You can re-run the install manually with: sudo -u odoo /opt/odoo/odoo19/venv/bin/python3 /opt/odoo/odoo19/odoo/odoo-bin -c /etc/odoo19.conf -d odoo19 -i \"<module_list>\" --stop-after-init"
-      exit 1
+      --stop-after-init > "$install_log" 2>&1
+    ret=$?
+    set -e
+    
+    if [[ $ret -eq 0 ]]; then
+      record_result "Install Modules (Update)" "SUCCESS" ""
+    else
+      err=$(grep -i "error" "$install_log" | tail -n 1 | cut -c1-100)
+      record_result "Install Modules (Update)" "FAILED" "$err"
+      echo "⚠️  Module update failed. Continuing..."
     fi
+    rm -f "$install_log"
   fi
 
   # Run all post-install configuration scripts
@@ -156,6 +187,15 @@ if [[ "${INIT_OK}" == "1" ]]; then
   run_config_script "${SET_SALE_UOM_SCRIPT}" "Enabling Units of measure and packaging in Sales..." 0
   run_config_script "${SET_PRODUCTS_SCRIPT}" "Creating default service products (0% tax)..." 1
 
+  echo ""
+  echo "=== INSTALLATION SUMMARY ==="
+  printf "%-45s | %-10s | %s\n" "Task" "Status" "Details"
+  echo "-------------------------------------------------------------------------------------------"
+  for i in "${!R_TASK[@]}"; do
+    printf "%-45s | %-10s | %s\n" "${R_TASK[$i]}" "${R_STATUS[$i]}" "${R_MSG[$i]}"
+  done
+  echo "============================"
+
   sudo systemctl start "${ODOO_SERVICE}" 2>/dev/null || true
   exit 0
 fi
@@ -164,13 +204,26 @@ fi
 sudo systemctl stop "${ODOO_SERVICE}" >/dev/null 2>&1 || true
 
 # INIT BASE (VALID FLAGS ONLY)
+base_log="/tmp/odoo_base_install.log"
+set +e
 sudo -u "${ODOO_USER}" "${ODOO_PY}" "${ODOO_BIN}" \
   -c "${ODOO_CONF}" \
   -d "${DB_NAME}" \
   -i base \
   --without-demo \
   --load-language="${LANG_CODE}" \
-  --stop-after-init
+  --stop-after-init > "$base_log" 2>&1
+ret=$?
+set -e
+
+if [[ $ret -eq 0 ]]; then
+  record_result "Init Base DB" "SUCCESS" ""
+else
+  err=$(grep -i "error" "$base_log" | tail -n 1 | cut -c1-100)
+  record_result "Init Base DB" "FAILED" "$err"
+  echo "⚠️  Base install failed. Continuing..."
+fi
+rm -f "$base_log"
 
 # Set default country for all companies (by ISO code, e.g. PA = Panama)
 # Copy script to /tmp so user 'odoo' can read it (repo may be under /home/ubuntu with restricted perms)
@@ -180,11 +233,24 @@ run_config_script "${SET_COUNTRY_SCRIPT}" "Setting default country to ${COUNTRY_
 if [[ -n "${INIT_MODULES}" ]]; then
   echo "Installing modules: ${INIT_MODULES}..."
   echo "(RST/docstring warnings during load are usually harmless.)"
+  mod_log="/tmp/odoo_mod_install.log"
+  set +e
   sudo -u "${ODOO_USER}" "${ODOO_PY}" "${ODOO_BIN}" \
     -c "${ODOO_CONF}" \
     -d "${DB_NAME}" \
     -i "${INIT_MODULES}" \
-    --stop-after-init
+    --stop-after-init > "$mod_log" 2>&1
+  ret=$?
+  set -e
+
+  if [[ $ret -eq 0 ]]; then
+    record_result "Install Extra Modules" "SUCCESS" ""
+  else
+    err=$(grep -i "error" "$mod_log" | tail -n 1 | cut -c1-100)
+    record_result "Install Extra Modules" "FAILED" "$err"
+    echo "⚠️  Module install failed. Continuing..."
+  fi
+  rm -f "$mod_log"
 fi
 
 # Run all post-install configuration scripts
@@ -202,6 +268,15 @@ run_config_script "${SET_PARTNER_TAGS_SCRIPT}" "Creating partner tags (Etiquetas
 run_config_script "${SET_CONTACTS_VIEW_SCRIPT}" "Setting Contacts default view to Kanban..." 0
 run_config_script "${SET_SALE_UOM_SCRIPT}" "Enabling Units of measure and packaging in Sales..." 0
 run_config_script "${SET_PRODUCTS_SCRIPT}" "Creating default service products (0% tax)..." 1
+
+echo ""
+echo "=== INSTALLATION SUMMARY ==="
+printf "%-45s | %-10s | %s\n" "Task" "Status" "Details"
+echo "-------------------------------------------------------------------------------------------"
+for i in "${!R_TASK[@]}"; do
+  printf "%-45s | %-10s | %s\n" "${R_TASK[$i]}" "${R_STATUS[$i]}" "${R_MSG[$i]}"
+done
+echo "============================"
 
 # Start service
 sudo systemctl start "${ODOO_SERVICE}"

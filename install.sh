@@ -86,21 +86,22 @@ ALLOW_ODOO_PORT="${ALLOW_ODOO_PORT:-0}"
 read -r -p "Odoo version to install [${DEFAULT_ODOO_VERSION}]: " ODOO_VERSION
 ODOO_VERSION="${ODOO_VERSION:-$DEFAULT_ODOO_VERSION}"
 
-read -r -p "Domain name (e.g. erp.example.com): " DOMAIN
-DOMAIN="${DOMAIN:-}"
+while [[ -z "${DOMAIN}" ]]; do
+  read -r -p "Domain name (e.g. erp.example.com): " DOMAIN
+  if [[ -z "${DOMAIN}" ]]; then
+    # If running non-interactively, fail to avoid infinite loop
+    if [[ ! -t 0 ]]; then echo "ERROR: DOMAIN is required."; exit 1; fi
+    echo "❌ Domain is required."
+  fi
+done
 
-read -r -p "Email for Let's Encrypt notifications: " LETSENCRYPT_EMAIL
-LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL:-}"
-
-if [[ -z "${DOMAIN}" ]]; then
-  echo "ERROR: DOMAIN is required."
-  exit 1
-fi
-
-if [[ -z "${LETSENCRYPT_EMAIL}" ]]; then
-  echo "ERROR: LETSENCRYPT_EMAIL is required."
-  exit 1
-fi
+while [[ -z "${LETSENCRYPT_EMAIL}" ]]; do
+  read -r -p "Email for Let's Encrypt notifications: " LETSENCRYPT_EMAIL
+  if [[ -z "${LETSENCRYPT_EMAIL}" ]]; then
+    if [[ ! -t 0 ]]; then echo "ERROR: LETSENCRYPT_EMAIL is required."; exit 1; fi
+    echo "❌ Email is required."
+  fi
+done
 
 # -------------------------------------------------------------------
 # Optional: remote SSL storage (certificates survive server reprovisioning)

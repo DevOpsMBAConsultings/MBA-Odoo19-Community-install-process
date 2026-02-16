@@ -58,6 +58,41 @@ if [[ -n "${ODOO_EXTRA_MODULES}" ]]; then
   INIT_MODULES="${INIT_MODULES},${ODOO_EXTRA_MODULES}"
 fi
 
+# Helper function to run post-install configuration scripts
+run_config_script() {
+  local script_path="$1"
+  local description="$2"
+  local require_pa="${3:-0}" # 0=Always run, 1=Run only if COUNTRY_CODE is PA
+
+  if [[ "${require_pa}" == "1" ]] && [[ "${COUNTRY_CODE}" != "PA" ]]; then
+    return 0
+  fi
+
+  if [[ -f "${script_path}" ]]; then
+    echo "${description}"
+    local script_name
+    script_name="$(basename "${script_path}")"
+    # Use a unique temp name to avoid collisions
+    local run_path="/tmp/${script_name%.*}_odoo.py"
+    
+    sudo cp "${script_path}" "${run_path}"
+    sudo chown "${ODOO_USER}:${ODOO_USER}" "${run_path}"
+    
+    # Pass common env vars used by the python scripts
+    sudo -u "${ODOO_USER}" env \
+      ODOO_HOME="${ODOO_HOME}" \
+      ODOO_CONF="${ODOO_CONF}" \
+      DB_NAME="${DB_NAME}" \
+      ODOO_COUNTRY_CODE="${COUNTRY_CODE}" \
+      "${ODOO_PY}" "${run_path}" || true
+      
+    sudo rm -f "${run_path}"
+  else
+    # Optional: Debug output if script missing
+    :
+  fi
+}
+
 echo "Initializing database '${DB_NAME}' for Odoo ${ODOO_VERSION}..."
 echo "Defaults: LANG=${LANG_CODE}, COUNTRY=${COUNTRY_CODE}, WITHOUT_DEMO=${WITHOUT_DEMO}, INIT_MODULES=${INIT_MODULES}"
 
@@ -87,18 +122,8 @@ INIT_OK="$(
 
 if [[ "${INIT_OK}" == "1" ]]; then
   echo "Database already initialized. Applying default country, installing any missing modules, and (if PA) 0% taxes + journals + fiscal position."
-  if [[ -f "${SET_COUNTRY_SCRIPT}" ]]; then
-    SET_COUNTRY_SCRIPT_RUN="/tmp/set_default_country_odoo.py"
-    sudo cp "${SET_COUNTRY_SCRIPT}" "${SET_COUNTRY_SCRIPT_RUN}"
-    sudo chown "${ODOO_USER}:${ODOO_USER}" "${SET_COUNTRY_SCRIPT_RUN}"
-    sudo -u "${ODOO_USER}" env \
-      ODOO_HOME="${ODOO_HOME}" \
-      ODOO_CONF="${ODOO_CONF}" \
-      DB_NAME="${DB_NAME}" \
-      ODOO_COUNTRY_CODE="${COUNTRY_CODE}" \
-      "${ODOO_PY}" "${SET_COUNTRY_SCRIPT_RUN}" || true
-    sudo rm -f "${SET_COUNTRY_SCRIPT_RUN}"
-  fi
+  run_config_script "${SET_COUNTRY_SCRIPT}" "Setting default country to ${COUNTRY_CODE}..." 0
+
   # Install any missing modules (standard + custom) so first login has apps already installed
   if [[ -n "${INIT_MODULES}" ]]; then
     echo "Installing any missing modules: ${INIT_MODULES}..."
@@ -114,112 +139,23 @@ if [[ "${INIT_OK}" == "1" ]]; then
       exit 1
     fi
   fi
-  # 0% taxes for Panama when country is PA
-  if [[ "${COUNTRY_CODE}" == "PA" ]] && [[ -f "${SET_TAXES_SCRIPT}" ]]; then
-    echo "Setting 0% taxes for Panama..."
-    SET_TAXES_SCRIPT_RUN="/tmp/set_default_taxes_pa_odoo.py"
-    sudo cp "${SET_TAXES_SCRIPT}" "${SET_TAXES_SCRIPT_RUN}"
-    sudo chown "${ODOO_USER}:${ODOO_USER}" "${SET_TAXES_SCRIPT_RUN}"
-    sudo -u "${ODOO_USER}" env \
-      ODOO_HOME="${ODOO_HOME}" \
-      ODOO_CONF="${ODOO_CONF}" \
-      DB_NAME="${DB_NAME}" \
-      ODOO_COUNTRY_CODE="${COUNTRY_CODE}" \
-      "${ODOO_PY}" "${SET_TAXES_SCRIPT_RUN}" || true
-    sudo rm -f "${SET_TAXES_SCRIPT_RUN}"
-  fi
-  # ITBMS 10% and 15% taxes for Panama when country is PA
-  if [[ "${COUNTRY_CODE}" == "PA" ]] && [[ -f "${SET_ITBMS_TAXES_SCRIPT}" ]]; then
-    echo "Setting ITBMS 10% and 15% taxes for Panama..."
-    RUN="/tmp/set_itbms_taxes_pa_odoo.py"
-    sudo cp "${SET_ITBMS_TAXES_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" ODOO_COUNTRY_CODE="${COUNTRY_CODE}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-  # Panama invoicing solution: default journals (Facturación electrónica, Notas de crédito) + fiscal position Exento de impuestos
-  if [[ "${COUNTRY_CODE}" == "PA" ]]; then
-    if [[ -f "${SET_SALES_JOURNAL_SCRIPT}" ]]; then
-      echo "Setting default sales journal (Facturación electrónica)..."
-      RUN="/tmp/set_default_sales_journal_odoo.py"
-      sudo cp "${SET_SALES_JOURNAL_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-      sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-      sudo rm -f "${RUN}"
-    fi
-    if [[ -f "${SET_CREDIT_NOTES_JOURNAL_SCRIPT}" ]]; then
-      echo "Setting default credit notes journal (Notas de Crédito)..."
-      RUN="/tmp/set_default_credit_notes_journal_odoo.py"
-      sudo cp "${SET_CREDIT_NOTES_JOURNAL_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-      sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-      sudo rm -f "${RUN}"
-    fi
-    if [[ -f "${SET_FISCAL_POSITION_SCRIPT}" ]]; then
-      echo "Setting fiscal position Exento de impuestos (Detectar de forma automática)..."
-      RUN="/tmp/set_fiscal_position_exento_odoo.py"
-      sudo cp "${SET_FISCAL_POSITION_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-      sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-      sudo rm -f "${RUN}"
-    fi
-    if [[ -f "${SET_FISCAL_POSITION_RETENCION_SCRIPT}" ]]; then
-      echo "Setting fiscal position Retención de impuestos..."
-      RUN="/tmp/set_fiscal_position_retencion_odoo.py"
-      sudo cp "${SET_FISCAL_POSITION_RETENCION_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-      sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-      sudo rm -f "${RUN}"
-    fi
-    if [[ -f "${SET_TAX_RETENCION_SCRIPT}" ]]; then
-      echo "Setting tax Retención de Impuestos (group 7%) and fiscal position mapping..."
-      RUN="/tmp/set_tax_retencion_impuestos_odoo.py"
-      sudo cp "${SET_TAX_RETENCION_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-      sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" ODOO_COUNTRY_CODE="${COUNTRY_CODE}" "${ODOO_PY}" "${RUN}" || true
-      sudo rm -f "${RUN}"
-    fi
-    if [[ -f "${SET_PANAMA_STATES_SCRIPT}" ]]; then
-      echo "Loading Panama provinces/comarcas (PA-01 .. PA-13)..."
-      RUN="/tmp/set_panama_states_odoo.py"
-      sudo cp "${SET_PANAMA_STATES_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-      sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" ODOO_COUNTRY_CODE="${COUNTRY_CODE}" "${ODOO_PY}" "${RUN}" || true
-      sudo rm -f "${RUN}"
-    fi
-    if [[ -f "${SET_PAYMENT_TERMS_SCRIPT}" ]]; then
-      echo "Setting default payment terms (Efectivo, Crédito, etc.)..."
-      RUN="/tmp/set_payment_terms_pa_odoo.py"
-      sudo cp "${SET_PAYMENT_TERMS_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-      sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-      sudo rm -f "${RUN}"
-    fi
-  fi
-  # Partner tags: create partner tags from list (runs for any country, after contacts module)
-  if [[ -f "${SET_PARTNER_TAGS_SCRIPT}" ]]; then
-    echo "Creating partner tags (Etiquetas)..."
-    RUN="/tmp/set_partner_tags_odoo.py"
-    sudo cp "${SET_PARTNER_TAGS_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-  # Contacts: default view Kanban (runs for any country)
-  if [[ -f "${SET_CONTACTS_VIEW_SCRIPT}" ]]; then
-    echo "Setting Contacts default view to Kanban..."
-    RUN="/tmp/set_contacts_default_view_kanban_odoo.py"
-    sudo cp "${SET_CONTACTS_VIEW_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-  # Sales: enable Unidades de medida y embalajes (runs when sale is installed)
-  if [[ -f "${SET_SALE_UOM_SCRIPT}" ]]; then
-    echo "Enabling Units of measure and packaging in Sales..."
-    RUN="/tmp/set_sale_uom_packaging_odoo.py"
-    sudo cp "${SET_SALE_UOM_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-  # Default service products (Servicio de Acarreo, Otros Gastos, Seguro) with 0% tax when PA
-  if [[ -f "${SET_PRODUCTS_SCRIPT}" ]] && [[ "${COUNTRY_CODE}" == "PA" ]]; then
-    echo "Creating default service products (0% tax)..."
-    RUN="/tmp/set_default_products_pa_odoo.py"
-    sudo cp "${SET_PRODUCTS_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" ODOO_COUNTRY_CODE="${COUNTRY_CODE}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
+
+  # Run all post-install configuration scripts
+  run_config_script "${SET_TAXES_SCRIPT}" "Setting 0% taxes for Panama..." 1
+  run_config_script "${SET_ITBMS_TAXES_SCRIPT}" "Setting ITBMS 10% and 15% taxes for Panama..." 1
+  run_config_script "${SET_SALES_JOURNAL_SCRIPT}" "Setting default sales journal (Facturación electrónica)..." 1
+  run_config_script "${SET_CREDIT_NOTES_JOURNAL_SCRIPT}" "Setting default credit notes journal (Notas de Crédito)..." 1
+  run_config_script "${SET_FISCAL_POSITION_SCRIPT}" "Setting fiscal position Exento de impuestos (Detectar de forma automática)..." 1
+  run_config_script "${SET_FISCAL_POSITION_RETENCION_SCRIPT}" "Setting fiscal position Retención de impuestos..." 1
+  run_config_script "${SET_TAX_RETENCION_SCRIPT}" "Setting tax Retención de Impuestos (group 7%) and fiscal position mapping..." 1
+  run_config_script "${SET_PANAMA_STATES_SCRIPT}" "Loading Panama provinces/comarcas (PA-01 .. PA-13)..." 1
+  run_config_script "${SET_PAYMENT_TERMS_SCRIPT}" "Setting default payment terms (Efectivo, Crédito, etc.)..." 1
+  
+  run_config_script "${SET_PARTNER_TAGS_SCRIPT}" "Creating partner tags (Etiquetas)..." 0
+  run_config_script "${SET_CONTACTS_VIEW_SCRIPT}" "Setting Contacts default view to Kanban..." 0
+  run_config_script "${SET_SALE_UOM_SCRIPT}" "Enabling Units of measure and packaging in Sales..." 0
+  run_config_script "${SET_PRODUCTS_SCRIPT}" "Creating default service products (0% tax)..." 1
+
   sudo systemctl start "${ODOO_SERVICE}" 2>/dev/null || true
   exit 0
 fi
@@ -238,21 +174,7 @@ sudo -u "${ODOO_USER}" "${ODOO_PY}" "${ODOO_BIN}" \
 
 # Set default country for all companies (by ISO code, e.g. PA = Panama)
 # Copy script to /tmp so user 'odoo' can read it (repo may be under /home/ubuntu with restricted perms)
-if [[ -f "${SET_COUNTRY_SCRIPT}" ]]; then
-  echo "Setting default country to ${COUNTRY_CODE}..."
-  SET_COUNTRY_SCRIPT_RUN="/tmp/set_default_country_odoo.py"
-  sudo cp "${SET_COUNTRY_SCRIPT}" "${SET_COUNTRY_SCRIPT_RUN}"
-  sudo chown "${ODOO_USER}:${ODOO_USER}" "${SET_COUNTRY_SCRIPT_RUN}"
-  sudo -u "${ODOO_USER}" env \
-    ODOO_HOME="${ODOO_HOME}" \
-    ODOO_CONF="${ODOO_CONF}" \
-    DB_NAME="${DB_NAME}" \
-    ODOO_COUNTRY_CODE="${COUNTRY_CODE}" \
-    "${ODOO_PY}" "${SET_COUNTRY_SCRIPT_RUN}" || true
-  sudo rm -f "${SET_COUNTRY_SCRIPT_RUN}"
-else
-  echo "⚠️ Script not found: ${SET_COUNTRY_SCRIPT}; skipping default country."
-fi
+run_config_script "${SET_COUNTRY_SCRIPT}" "Setting default country to ${COUNTRY_CODE}..." 0
 
 # Install extra modules (e.g. l10n_pa, sale, purchase, custom add-ons); must be in addons_path (OCA zips run in 08 before this)
 if [[ -n "${INIT_MODULES}" ]]; then
@@ -265,118 +187,21 @@ if [[ -n "${INIT_MODULES}" ]]; then
     --stop-after-init
 fi
 
-# 0% taxes for Panama when country is PA (after account/l10n are installed)
-if [[ "${COUNTRY_CODE}" == "PA" ]] && [[ -f "${SET_TAXES_SCRIPT}" ]]; then
-  echo "Setting 0% taxes for Panama..."
-  SET_TAXES_SCRIPT_RUN="/tmp/set_default_taxes_pa_odoo.py"
-  sudo cp "${SET_TAXES_SCRIPT}" "${SET_TAXES_SCRIPT_RUN}"
-  sudo chown "${ODOO_USER}:${ODOO_USER}" "${SET_TAXES_SCRIPT_RUN}"
-  sudo -u "${ODOO_USER}" env \
-    ODOO_HOME="${ODOO_HOME}" \
-    ODOO_CONF="${ODOO_CONF}" \
-    DB_NAME="${DB_NAME}" \
-    ODOO_COUNTRY_CODE="${COUNTRY_CODE}" \
-    "${ODOO_PY}" "${SET_TAXES_SCRIPT_RUN}" || true
-  sudo rm -f "${SET_TAXES_SCRIPT_RUN}"
-fi
+# Run all post-install configuration scripts
+run_config_script "${SET_TAXES_SCRIPT}" "Setting 0% taxes for Panama..." 1
+run_config_script "${SET_ITBMS_TAXES_SCRIPT}" "Setting ITBMS 10% and 15% taxes for Panama..." 1
+run_config_script "${SET_SALES_JOURNAL_SCRIPT}" "Setting default sales journal (Facturación electrónica)..." 1
+run_config_script "${SET_CREDIT_NOTES_JOURNAL_SCRIPT}" "Setting default credit notes journal (Notas de Crédito)..." 1
+run_config_script "${SET_FISCAL_POSITION_SCRIPT}" "Setting fiscal position Exento de impuestos (Detectar de forma automática)..." 1
+run_config_script "${SET_FISCAL_POSITION_RETENCION_SCRIPT}" "Setting fiscal position Retención de impuestos..." 1
+run_config_script "${SET_TAX_RETENCION_SCRIPT}" "Setting tax Retención de Impuestos (group 7%) and fiscal position mapping..." 1
+run_config_script "${SET_PANAMA_STATES_SCRIPT}" "Loading Panama provinces/comarcas (PA-01 .. PA-13)..." 1
+run_config_script "${SET_PAYMENT_TERMS_SCRIPT}" "Setting default payment terms (Efectivo, Crédito, etc.)..." 1
 
-# ITBMS 10% and 15% taxes for Panama when country is PA
-if [[ "${COUNTRY_CODE}" == "PA" ]] && [[ -f "${SET_ITBMS_TAXES_SCRIPT}" ]]; then
-  echo "Setting ITBMS 10% and 15% taxes for Panama..."
-  RUN="/tmp/set_itbms_taxes_pa_odoo.py"
-  sudo cp "${SET_ITBMS_TAXES_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-  sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" ODOO_COUNTRY_CODE="${COUNTRY_CODE}" "${ODOO_PY}" "${RUN}" || true
-  sudo rm -f "${RUN}"
-fi
-
-# Panama invoicing solution: default journals (Facturación electrónica, Notas de crédito) + fiscal position Exento de impuestos
-if [[ "${COUNTRY_CODE}" == "PA" ]]; then
-  if [[ -f "${SET_SALES_JOURNAL_SCRIPT}" ]]; then
-    echo "Setting default sales journal (Facturación electrónica)..."
-    RUN="/tmp/set_default_sales_journal_odoo.py"
-    sudo cp "${SET_SALES_JOURNAL_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-  if [[ -f "${SET_CREDIT_NOTES_JOURNAL_SCRIPT}" ]]; then
-    echo "Setting default credit notes journal (Notas de Crédito)..."
-    RUN="/tmp/set_default_credit_notes_journal_odoo.py"
-    sudo cp "${SET_CREDIT_NOTES_JOURNAL_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-  if [[ -f "${SET_FISCAL_POSITION_SCRIPT}" ]]; then
-    echo "Setting fiscal position Exento de impuestos (Detectar de forma automática)..."
-    RUN="/tmp/set_fiscal_position_exento_odoo.py"
-    sudo cp "${SET_FISCAL_POSITION_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-  if [[ -f "${SET_FISCAL_POSITION_RETENCION_SCRIPT}" ]]; then
-    echo "Setting fiscal position Retención de impuestos..."
-    RUN="/tmp/set_fiscal_position_retencion_odoo.py"
-    sudo cp "${SET_FISCAL_POSITION_RETENCION_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-  if [[ -f "${SET_TAX_RETENCION_SCRIPT}" ]]; then
-    echo "Setting tax Retención de Impuestos (group 7%) and fiscal position mapping..."
-    RUN="/tmp/set_tax_retencion_impuestos_odoo.py"
-    sudo cp "${SET_TAX_RETENCION_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" ODOO_COUNTRY_CODE="${COUNTRY_CODE}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-  if [[ -f "${SET_PANAMA_STATES_SCRIPT}" ]]; then
-    echo "Loading Panama provinces/comarcas (PA-01 .. PA-13)..."
-    RUN="/tmp/set_panama_states_odoo.py"
-    sudo cp "${SET_PANAMA_STATES_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" ODOO_COUNTRY_CODE="${COUNTRY_CODE}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-  if [[ -f "${SET_PAYMENT_TERMS_SCRIPT}" ]]; then
-    echo "Setting default payment terms (Efectivo, Crédito, etc.)..."
-    RUN="/tmp/set_payment_terms_pa_odoo.py"
-    sudo cp "${SET_PAYMENT_TERMS_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-    sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-    sudo rm -f "${RUN}"
-  fi
-fi
-
-# Partner tags: create partner tags from list (runs for any country, after contacts module)
-if [[ -f "${SET_PARTNER_TAGS_SCRIPT}" ]]; then
-  echo "Creating partner tags (Etiquetas)..."
-  RUN="/tmp/set_partner_tags_odoo.py"
-  sudo cp "${SET_PARTNER_TAGS_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-  sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-  sudo rm -f "${RUN}"
-fi
-
-# Contacts: default view Kanban (runs for any country)
-if [[ -f "${SET_CONTACTS_VIEW_SCRIPT}" ]]; then
-  echo "Setting Contacts default view to Kanban..."
-  RUN="/tmp/set_contacts_default_view_kanban_odoo.py"
-  sudo cp "${SET_CONTACTS_VIEW_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-  sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-  sudo rm -f "${RUN}"
-fi
-
-# Sales: enable Unidades de medida y embalajes (runs when sale is installed)
-if [[ -f "${SET_SALE_UOM_SCRIPT}" ]]; then
-  echo "Enabling Units of measure and packaging in Sales..."
-  RUN="/tmp/set_sale_uom_packaging_odoo.py"
-  sudo cp "${SET_SALE_UOM_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-  sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" "${ODOO_PY}" "${RUN}" || true
-  sudo rm -f "${RUN}"
-fi
-
-# Default service products (Servicio de Acarreo, Otros Gastos, Seguro) with 0% tax when PA
-if [[ -f "${SET_PRODUCTS_SCRIPT}" ]] && [[ "${COUNTRY_CODE}" == "PA" ]]; then
-  echo "Creating default service products (0% tax)..."
-  RUN="/tmp/set_default_products_pa_odoo.py"
-  sudo cp "${SET_PRODUCTS_SCRIPT}" "${RUN}" && sudo chown "${ODOO_USER}:${ODOO_USER}" "${RUN}"
-  sudo -u "${ODOO_USER}" env ODOO_HOME="${ODOO_HOME}" ODOO_CONF="${ODOO_CONF}" DB_NAME="${DB_NAME}" ODOO_COUNTRY_CODE="${COUNTRY_CODE}" "${ODOO_PY}" "${RUN}" || true
-  sudo rm -f "${RUN}"
-fi
+run_config_script "${SET_PARTNER_TAGS_SCRIPT}" "Creating partner tags (Etiquetas)..." 0
+run_config_script "${SET_CONTACTS_VIEW_SCRIPT}" "Setting Contacts default view to Kanban..." 0
+run_config_script "${SET_SALE_UOM_SCRIPT}" "Enabling Units of measure and packaging in Sales..." 0
+run_config_script "${SET_PRODUCTS_SCRIPT}" "Creating default service products (0% tax)..." 1
 
 # Start service
 sudo systemctl start "${ODOO_SERVICE}"

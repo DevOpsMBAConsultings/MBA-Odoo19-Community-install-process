@@ -30,7 +30,7 @@ Use this list to see everything the script does and to verify nothing is missing
 | 06 | `06_python_dependencies.sh` | Install Odoo `requirements.txt` + **wand** (for sale_product_image) |
 | 07 | `07_odoo_config.sh` | Generate `/etc/odoo19.conf` from template (DB name, admin password, addons_path) |
 | 07 | `07_systemd_service.sh` | Create and enable `odoo19` systemd service |
-| 08 | `08_install_oca_zips.sh` | See **OCA zips (08)** below |
+| 08 | `08_clone_custom_addons.sh` | See **Custom Addons (08)** below |
 | 09 | `09_init_database.sh` | See **Init database (09)** below |
 | 10 | `10_ufw_firewall.sh` | UFW: allow OpenSSH, 80, 443; optionally 8069 if `ALLOW_ODOO_PORT=1` |
 | 11 | `11_ngnix.sh` | Nginx reverse proxy, Let's Encrypt SSL (certbot), proxy to Odoo on 127.0.0.1:8069 |
@@ -39,30 +39,20 @@ Use this list to see everything the script does and to verify nothing is missing
 
 ---
 
-## OCA zips (08) – in detail
+## Custom Addons (08) – in detail
 
-**Script:** `install/08_install_oca_zips.sh`
+**Script:** `install/08_clone_custom_addons.sh`
 
 | Item | Detail |
 |------|--------|
-| **Source** | `$SCRIPT_DIR/assets/oca-zips/` (i.e. repo `assets/oca-zips/`) – every `*.zip` in that folder. |
+| **Source** | `custom_addons.txt` in the repo root. |
 | **Target** | `/opt/odoo/custom-addons` – all addons end up here. |
-| **Temp dir** | `/tmp/oca_zip_extract` – used per ZIP, then removed. |
-| **If no ZIP dir** | Script exits 0 (skips); no error. |
-| **If unzip missing** | Installs `unzip` via apt. |
 
-**Per ZIP file:**
-
-1. Extract ZIP into `/tmp/oca_zip_extract`.
-2. For each **top-level directory** inside the extracted content:
-   - Skip if it has no `__manifest__.py` (e.g. `__MACOSX` is skipped).
-   - Otherwise treat as one addon: destination = `/opt/odoo/custom-addons/$(basename $sub)`.
-   - Remove existing destination if present, then move the directory there (`rm -rf "$DEST"`; `mv "$sub" "$DEST"`).
-3. So one ZIP can contain one or several addon directories; each directory with a manifest becomes one addon in `custom-addons`.
-
-**After all ZIPs:**
-
-- `chown -R odoo:odoo /opt/odoo/custom-addons`.
+**Process:**
+1. Reads `custom_addons.txt` line by line.
+2. Clones each repository into `/opt/odoo/custom-addons`.
+3. Handles private repositories using `config/token.txt` (replaces `your-github-token` in URL).
+4. `chown -R odoo:odoo /opt/odoo/custom-addons`.
 - List all `__manifest__.py` under `custom-addons` (maxdepth 2).
 - If **zero** manifests found → script exits 1.
 - `systemctl restart odoo19`; check service is active (or warn).

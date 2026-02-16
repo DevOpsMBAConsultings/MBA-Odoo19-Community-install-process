@@ -52,23 +52,14 @@ sudo ./install.sh
 
 ---
 
-## Step 2: Install Digifact Modules
+## Step 2: Configure Digifact Modules (Automated)
 
-### 2.1 Clone the Modules
+Instead of cloning manually, add your repositories to `custom_addons.txt` **before** running the install script.
 
-```bash
-sudo su - odoo
-cd /opt/odoo/custom-addons
-
-# Clone the base module (company configuration)
-git clone <repository-url>/l10n_pa_edi_digifact_company.git
-
-# Clone the main module
-git clone <repository-url>/l10n_pa_edi_digifact.git
-
-# Verify modules are cloned
-ls -la
-exit
+1. Edit `custom_addons.txt`:
+```text
+https://your-github-token@github.com/DevOpsMBAConsultings/l10n_pa_edi_digifact_company.git
+https://your-github-token@github.com/DevOpsMBAConsultings/l10n_pa_edi_digifact.git
 ```
 
 **Replace `<repository-url>` with your actual repository URL.**

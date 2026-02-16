@@ -30,3 +30,13 @@
 
 # Your private Golden Egg module for Panamanian electronic invoicing.
 # https://your-github-token@github.com/DevOpsMBAConsultings/facturacion_electronica.git
+
+
+https://your-github-token@github.com/DevOpsMBAConsultings/mba_partner_phone_pa.git
+https://your-github-token@github.com/DevOpsMBAConsultings/main_menu.git
+https://your-github-token@github.com/DevOpsMBAConsultings/rs_flexible_chatter_resizer.git
+https://your-github-token@github.com/DevOpsMBAConsultings/sale_product_image.git
+https://your-github-token@github.com/DevOpsMBAConsultings/dynamic_accounts_report.git
+https://your-github-token@github.com/DevOpsMBAConsultings/base_accounting_kit.git
+https://your-github-token@github.com/DevOpsMBAConsultings/base_account_budget.git
+https://your-github-token@github.com/DevOpsMBAConsultings/facturacion_electronica.git

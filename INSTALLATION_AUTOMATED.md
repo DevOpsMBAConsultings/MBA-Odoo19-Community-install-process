@@ -83,16 +83,15 @@ https://your-github-token@github.com/DevOpsMBAConsultings/l10n_pa_edi_digifact.g
 
 **Replace `<repository-url>` with your actual repository URL.**
 
-### 2.2 Install Python Dependencies
+### 2.2 Automatic Dependency Installation
+The installation script will now automatically:
+1. Clone the repositories.
+2. Detect if they contain `requirements.txt` and install Python dependencies automatically.
+3. Detect valid Odoo modules (scanning subdirectories for `__manifest__.py`) and register them.
+4. Attempt to install these modules into the database during initialization.
 
-```bash
-sudo su - odoo
-source /opt/odoo/odoo19/venv/bin/activate
-pip install requests
-exit
-```
-
-### 2.3 Restart Odoo
+### 2.3 Restart Odoo (Optional)
+The script restarts Odoo automatically, but if you need to do it manually:
 
 ```bash
 sudo systemctl restart odoo19
@@ -269,11 +268,14 @@ sudo systemctl restart odoo19
 
 ### Import Errors
 
-**Install missing dependencies:**
+**Check logs for missing dependencies:**
+The script attempts to install `requirements.txt` from your addons. If an error persists:
+
 ```bash
 sudo su - odoo
 source /opt/odoo/odoo19/venv/bin/activate
-pip install requests
+# Manually install the missing package
+pip install package_name
 exit
 sudo systemctl restart odoo19
 ```

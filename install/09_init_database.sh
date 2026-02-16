@@ -42,8 +42,20 @@ if [[ -n "${ODOO_INIT_MODULES:-}" ]]; then
   INIT_MODULES="${ODOO_INIT_MODULES}"
 else
   INIT_MODULES=""
-  if [[ -d "${CUSTOM_ADDONS}" ]]; then
-    for dir in "${CUSTOM_ADDONS}"/*/; do
+  # Use AUTO_ADDONS if it exists (new method), otherwise fallback to CUSTOM_ADDONS (legacy/manual)
+  AUTO_ADDONS="/opt/odoo/auto-addons"
+  SCAN_DIR=""
+  
+  if [[ -d "${AUTO_ADDONS}" ]] && [[ -n "$(ls -A "${AUTO_ADDONS}")" ]]; then
+      SCAN_DIR="${AUTO_ADDONS}"
+  elif [[ -d "${CUSTOM_ADDONS}" ]]; then
+      SCAN_DIR="${CUSTOM_ADDONS}"
+  fi
+
+  if [[ -n "${SCAN_DIR}" ]]; then
+    for dir in "${SCAN_DIR}"/*/; do
+      # In auto-addons, everything is a symlink to a module root, so check for manifest
+      # In custom-addons (legacy), we also check for manifest
       [[ -f "${dir}__manifest__.py" ]] || continue
       name="$(basename "$dir")"
       [[ -n "${INIT_MODULES}" ]] && INIT_MODULES="${INIT_MODULES},"

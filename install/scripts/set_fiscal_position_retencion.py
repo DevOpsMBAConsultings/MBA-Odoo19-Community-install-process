@@ -17,7 +17,7 @@ import sys
 ODOO_CONF = os.environ.get("ODOO_CONF")
 DB_NAME = os.environ.get("DB_NAME")
 FP_NAME = (os.environ.get("ODOO_FISCAL_POSITION_RETENCION_NAME") or "Retención de impuestos").strip()
-AUTO_APPLY = os.environ.get("ODOO_FISCAL_POSITION_RETENCION_AUTO_APPLY", "0").strip() in ("1", "true", "yes")
+AUTO_APPLY = os.environ.get("ODOO_FISCAL_POSITION_RETENCION_AUTO_APPLY", "1").strip() in ("1", "true", "yes")
 
 if not ODOO_CONF or not DB_NAME:
     print("ERROR: ODOO_CONF and DB_NAME must be set.", file=sys.stderr)

@@ -276,31 +276,33 @@ with cr_context as cr:
         else:
             # Add mapping: 0% -> Retención de impuestos (The group tax)
             
-            # Check if mapping exists
-            # Odoo 19/18 model for fiscal position tax lines: account.fiscal.position.tax
-            # Fields: position_id, src_tax_id, tax_dest_id
+            # Check if mapping exists by iterating over fp.tax_ids
+            # This avoids accessing env["account.fiscal.position.tax"] directly which triggered a KeyError
+            mapping_exists = False
+            lines_to_remove = []
             
-            # First, check if the mapping already exists
-            existing_mapping = env["account.fiscal.position.tax"].search([
-                ("position_id", "=", fp.id),
-                ("src_tax_id", "=", tax_0_sale.id),
-                ("tax_dest_id", "=", final_tax.id),
-            ], limit=1)
-            
-            if not existing_mapping:
-                # Remove any other mapping for this source tax to avoid conflicts (optional but safer)
-                old_mappings = env["account.fiscal.position.tax"].search([
-                    ("position_id", "=", fp.id),
-                    ("src_tax_id", "=", tax_0_sale.id),
-                ])
-                if old_mappings:
-                    old_mappings.unlink()
-                    print(f"  [Unlinked] Old mappings for source tax {tax_0_sale.name}")
+            for line in fp.tax_ids:
+                if line.src_tax_id.id == tax_0_sale.id:
+                    if line.tax_dest_id.id == final_tax.id:
+                        mapping_exists = True
+                    else:
+                        # Mark conflicting lines for removal (e.g. mapping to null or another tax)
+                        lines_to_remove.append(line.id)
+
+            if not mapping_exists:
+                # Unlink conflicting lines
+                if lines_to_remove:
+                    fp.write({"tax_ids": [(2, line_id) for line_id in lines_to_remove]})
+                    print(f"  [Unlinked] Removed {len(lines_to_remove)} conflicting mappings for source tax {tax_0_sale.name}")
                 
-                env["account.fiscal.position.tax"].create({
-                    "position_id": fp.id,
-                    "src_tax_id": tax_0_sale.id,
-                    "tax_dest_id": final_tax.id,
+                # Create new mapping
+                fp.write({
+                    "tax_ids": [
+                        (0, 0, {
+                            "src_tax_id": tax_0_sale.id,
+                            "tax_dest_id": final_tax.id,
+                        })
+                    ]
                 })
                 print(f"  [MAPPING] {tax_0_sale.name} -> {final_tax.name} in '{fp.name}'")
             else:

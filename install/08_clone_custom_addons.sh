@@ -3,7 +3,13 @@ set -e
 
 ODOO_USER="odoo"
 TARGET_DIR="/opt/odoo/custom-addons"
-ODOO_VERSION="19.0" # Target branch for addons
+ODOO_VERSION="${ODOO_VERSION:-19.0}" # Service name suffix (e.g. odoo19)
+# If ODOO_VERSION is just "19", we might need "19.0" for the branch.
+if [[ "$ODOO_VERSION" =~ ^[0-9]+$ ]]; then
+  TARGET_BRANCH="${ODOO_VERSION}.0"
+else
+  TARGET_BRANCH="$ODOO_VERSION"
+fi
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ADDONS_FILE="$REPO_ROOT/custom_addons.txt"
 
@@ -90,8 +96,8 @@ if grep -v '^[[:space:]]*#' "$ADDONS_FILE" | grep -q "your-github-token" && [ -z
     fi
   
     # Attempt to clone the specific Odoo version branch, fall back to default branch
-    if ! git clone --depth 1 --branch "$ODOO_VERSION" "$repo_url" "$clone_path" 2>/dev/null; then
-      echo "    Branch '$ODOO_VERSION' not found. Trying default branch..."
+    if ! git clone --depth 1 --branch "$TARGET_BRANCH" "$repo_url" "$clone_path" 2>/dev/null; then
+      echo "    Branch '$TARGET_BRANCH' not found. Trying default branch..."
       git clone --depth 1 "$repo_url" "$clone_path" || echo "❌ Failed to clone $repo_name. Skipping."
     fi
   

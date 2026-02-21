@@ -81,6 +81,13 @@ with cr_context as cr:
     
     print(f"DEBUG: Processing {len(companies)} company/companies for country {COUNTRY_CODE}...", file=sys.stderr)
 
+    # Helper to check for existing fields to avoid crashes on different Odoo versions
+    valid_tax_fields = set(env["account.tax"].fields_get().keys())
+    
+    def safe_tax_vals(vals):
+        """Prepares a dictionary of vals, removing keys that do not exist in the model."""
+        return {k: v for k, v in vals.items() if k in valid_tax_fields}
+
     for company in companies:
         fiscal_country = company.account_fiscal_country_id or company.country_id
         if fiscal_country and fiscal_country.code != COUNTRY_CODE:
@@ -142,6 +149,9 @@ with cr_context as cr:
             # Label (Etiqueta on invoices)
             "invoice_label": "7%", 
         }
+        
+        # Filter vals to ensuring all keys exist in the model
+        tax1_vals = safe_tax_vals(tax1_vals)
 
         if not tax1:
             tax1 = Tax.create(tax1_vals)
@@ -182,6 +192,9 @@ with cr_context as cr:
             # Label
             "invoice_label": "-3.5%",
         }
+        
+        # Filter vals to ensuring all keys exist in the model
+        tax2_vals = safe_tax_vals(tax2_vals)
 
         if not tax2:
             tax2 = Tax.create(tax2_vals)
@@ -215,8 +228,11 @@ with cr_context as cr:
             "tax_group_id": group.id,
             "children_tax_ids": [(6, 0, [tax1.id, tax2.id])],
             "description": False, # Description blank per requirements
-            "invoice_label": False, # Etiqueta blank
+            "invoice_label": "", # Etiqueta blank (Use empty string instead of False for safety)
         }
+        
+        # Filter vals to ensuring all keys exist in the model
+        final_tax_vals = safe_tax_vals(final_tax_vals)
 
         if not final_tax:
             final_tax = Tax.create(final_tax_vals)
@@ -265,10 +281,14 @@ with cr_context as cr:
         
         if not tax_0_sale:
             # Fallback search by name if multiple 0% exist or none found by amount
+            # Fallback search by name if multiple 0% exist or none found by amount
+            # Also search for "0%" name explicitly, as set_default_taxes_pa.py creates it as "0%"
             tax_0_sale = Tax.search([
                 ("company_id", "=", company.id),
                 ("type_tax_use", "=", "sale"),
+                "|",
                 ("name", "ilike", "Exento"),
+                ("name", "=", "0%"),
             ], limit=1)
 
         if not tax_0_sale:

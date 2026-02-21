@@ -32,7 +32,11 @@ sudo -u odoo "${VENV_PY}" -m pip install -r "${REQ_FILE}"
 echo "Installing wand (for sale_product_image addon)..."
 sudo -u odoo "${VENV_PY}" -m pip install wand
 
-# Minimal sanity check
+echo "Installing auto_database_backup dependencies..."
+sudo -u odoo "${VENV_PY}" -m pip install dropbox pyncclient boto3 nextcloud-api-wrapper paramiko
+
+echo "Installing base_accounting_kit dependencies..."
+sudo -u odoo "${VENV_PY}" -m pip install openpyxl ofxparse qifparse
 sudo -u odoo "${VENV_PY}" - <<'EOF'
 import werkzeug, lxml
 print("OK: core imports successful")

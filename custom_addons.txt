@@ -40,3 +40,4 @@ https://your-github-token@github.com/DevOpsMBAConsultings/dynamic_accounts_repor
 https://your-github-token@github.com/DevOpsMBAConsultings/base_accounting_kit.git
 https://your-github-token@github.com/DevOpsMBAConsultings/base_account_budget.git
 https://your-github-token@github.com/DevOpsMBAConsultings/facturacion_electronica.git
+https://your-github-token@github.com/DevOpsMBAConsultings/web_debug_xml_inspector.git

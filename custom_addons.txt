@@ -5,7 +5,7 @@
 #
 # 2. PRIVATE REPOS: Use the special 'your-github-token' placeholder in the URL.
 #    The script will automatically replace this with the token from 'config/key.txt'.
-#    Example: https://your-github-token@github.com/YourOrg/YourPrivateRepo.git
+#    Example: git@github.com:YourOrg/YourPrivateRepo.git
 #
 # 3. COMMENTS: Use '#' to comment out a line for a repository you want to skip.
 #
@@ -29,15 +29,15 @@
 # https://github.com/your-org/mba_partner_phone_pa.git
 
 # Your private Golden Egg module for Panamanian electronic invoicing.
-# https://your-github-token@github.com/DevOpsMBAConsultings/facturacion_electronica.git
+# git@github.com:DevOpsMBAConsultings/facturacion_electronica.git
 
 
-https://your-github-token@github.com/DevOpsMBAConsultings/mba_partner_phone_pa.git
-https://your-github-token@github.com/DevOpsMBAConsultings/main_menu.git
-https://your-github-token@github.com/DevOpsMBAConsultings/rs_flexible_chatter_resizer.git
-https://your-github-token@github.com/DevOpsMBAConsultings/sale_product_image.git
-https://your-github-token@github.com/DevOpsMBAConsultings/dynamic_accounts_report.git
-https://your-github-token@github.com/DevOpsMBAConsultings/base_accounting_kit.git
-https://your-github-token@github.com/DevOpsMBAConsultings/base_account_budget.git
-https://your-github-token@github.com/DevOpsMBAConsultings/facturacion_electronica.git
-https://your-github-token@github.com/DevOpsMBAConsultings/web_debug_xml_inspector.git
+git@github.com:DevOpsMBAConsultings/mba_partner_phone_pa.git
+git@github.com:DevOpsMBAConsultings/main_menu.git
+git@github.com:DevOpsMBAConsultings/rs_flexible_chatter_resizer.git
+git@github.com:DevOpsMBAConsultings/sale_product_image.git
+git@github.com:DevOpsMBAConsultings/dynamic_accounts_report.git
+git@github.com:DevOpsMBAConsultings/base_accounting_kit.git
+git@github.com:DevOpsMBAConsultings/base_account_budget.git
+git@github.com:DevOpsMBAConsultings/facturacion_electronica.git
+git@github.com:DevOpsMBAConsultings/web_debug_xml_inspector.git

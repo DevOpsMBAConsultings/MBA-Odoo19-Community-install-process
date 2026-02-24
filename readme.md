@@ -33,19 +33,16 @@ El sistema de add-ons ha sido modernizado para usar repositorios de Git en lugar
 
 - **Archivo de Repositorios (`custom_addons.txt`):** Este es el archivo principal donde se define qué módulos instalar. Cada línea debe ser la URL de un repositorio de Git que se clonará en la carpeta `/opt/odoo/custom-addons/`.
 
-- **Manejo de Secretos (`config/token.txt`):** Para clonar repositorios privados (por ejemplo, desde GitHub), el sistema necesita un token de acceso.
-  1.  Copia tu token de acceso personal de GitHub.
-  2.  Pégalo dentro del archivo `config/token.txt`.
-  3.  Este archivo está ignorado por Git (`.gitignore`), por lo que tu token nunca se subirá al repositorio público.
+- **Manejo de Secretos (Claves SSH):** Dado que el servidor se crea con tu llave pública precargada, el sistema utilizará la autenticación nativa de SSH de tu servidor para clonar repositorios privados de GitHub. No necesitas configurar tokens.
 
 - **Cómo añadir repositorios en `custom_addons.txt`:**
-  - **Repositorios Públicos:** Simplemente añade la URL completa.
+  - **Repositorios Públicos:** Puedes añadir la URL HTTPS completa.
     ```
     https://github.com/OCA/web.git
     ```
-  - **Repositorios Privados:** Usa el placeholder especial `your-github-token`. El script lo reemplazará automáticamente con el token de `config/token.txt`.
+  - **Repositorios Privados:** Usa la sintaxis de SSH. Esto usará la llave SSH de tu servidor automáticamente sin pedir contraseña o token.
     ```
-    https://your-github-token@github.com/DevOpsMBAConsultings/facturacion_electronica.git
+    git@github.com:DevOpsMBAConsultings/facturacion_electronica.git
     ```
 
 - **Instalación de Módulos:** El proceso de instalación (`09_init_database.sh`) sigue funcionando igual. Por defecto, instalará **todos** los módulos que se encuentren en los repositorios clonados dentro de `custom-addons`, además de los módulos estándar definidos en `ODOO_EXTRA_MODULES`. Puedes restringir qué módulos custom se instalan usando la variable `ODOO_INIT_MODULES`.
@@ -69,9 +66,8 @@ Este método es ideal para un despliegue rápido en un servidor nuevo.
     cd MBA-Odoo19-Community-install-process
     ```
 
-3.  **Configura tus módulos y token (si usas repositorios privados):**
+3.  **Configura tus módulos:**
     - **Edita la lista de módulos:** `nano custom_addons.txt`
-    - **Añade tu token de GitHub:** `echo "tu-token-aqui" > config/token.txt`
 
 4.  **Ejecuta el instalador:**
     ```bash
@@ -84,7 +80,6 @@ Este método es ideal para un despliegue rápido en un servidor nuevo.
 Usa este método para probar cambios locales en los scripts sin necesidad de hacer `git push`.
 
 1.  **Prepara tu entorno local:**
-    - Asegúrate de que tu token de GitHub está en `config/token.txt`.
     - Edita `custom_addons.txt` según necesites.
 
 2.  **Abre un terminal en tu máquina local** y navega a la carpeta que contiene el proyecto (ej. `cd ~/Development/mba-odoo-addons`).

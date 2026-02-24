@@ -30,44 +30,7 @@ if [ ! -f "$ADDONS_FILE" ]; then
   exit 0
 fi
 
-# Determine GitHub token if a private repo is listed
-if grep -v '^[[:space:]]*#' "$ADDONS_FILE" | grep -q "your-github-token" && [ -z "${GITHUB_TOKEN:-}" ]; then
-    KEY_FILE="$REPO_ROOT/config/token.txt"
-    # Fallback to key.txt if token.txt doesn't exist (legacy/doc support)
-    if [ ! -f "$KEY_FILE" ] && [ -f "$REPO_ROOT/config/key.txt" ]; then
-      KEY_FILE="$REPO_ROOT/config/key.txt"
-    fi
 
-    if [ -f "$KEY_FILE" ]; then
-      # Read token from key file, ignoring comments and taking the last valid line
-      TOKEN_FROM_FILE=$(grep -v '^#' "$KEY_FILE" | awk 'NF' | tail -n 1)
-      if [ -n "$TOKEN_FROM_FILE" ] && [ "$TOKEN_FROM_FILE" != "your-token-goes-here" ]; then
-        echo "🔑 Token found in $KEY_FILE. Using it for private repositories."
-        GITHUB_TOKEN="$TOKEN_FROM_FILE"
-      fi
-    fi
-  
-    # If token is still not set, fall back to interactive prompt
-    if [ -z "${GITHUB_TOKEN:-}" ]; then
-      # Try to auto-detect token from current repo's git config (origin URL)
-      # This handles the case where the user cloned the main repo with a token
-      REMOTE_URL=$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null || true)
-      if [[ "$REMOTE_URL" =~ https://([^@]+)@github\.com ]]; then
-        DETECTED_TOKEN="${BASH_REMATCH[1]}"
-        if [ -n "$DETECTED_TOKEN" ]; then
-          echo "💡 Detected GitHub token from current repository URL. Using it for addons."
-          GITHUB_TOKEN="$DETECTED_TOKEN"
-        fi
-      fi
-    fi
-  
-    if [ -z "${GITHUB_TOKEN:-}" ]; then
-      echo "⚠️ 'your-github-token' placeholder detected but no token found in config/token.txt or config/key.txt."
-      echo "   Repositories using the placeholder will be skipped."
-      echo "   (If you embedded the token in the URL directly, this warning can be ignored.)"
-    fi
-  fi
-  
   
   while IFS= read -r repo_url || [ -n "$repo_url" ]; do
     # Skip comments and empty lines
@@ -75,15 +38,6 @@ if grep -v '^[[:space:]]*#' "$ADDONS_FILE" | grep -q "your-github-token" && [ -z
     [[ "$repo_url" =~ ^#.*$ ]] && continue
     [[ -z "$repo_url" ]] && continue
   
-    # Handle private repos that require a token
-    if [[ "$repo_url" == *your-github-token* ]]; then
-      if [ -n "${GITHUB_TOKEN:-}" ]; then
-        repo_url="${repo_url/your-github-token/$GITHUB_TOKEN}"
-      else
-        echo "🚫 Skipping private repo as no GitHub token was provided: $repo_url"
-        continue
-      fi
-    fi
   
     repo_name=$(basename "$repo_url" .git)
     clone_path="$TARGET_DIR/$repo_name"

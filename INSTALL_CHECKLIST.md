@@ -51,7 +51,7 @@ Use this list to see everything the script does and to verify nothing is missing
 **Process:**
 1. Reads `custom_addons.txt` line by line.
 2. Clones each repository into `/opt/odoo/custom-addons`.
-3. Handles private repositories using `config/token.txt` (replaces `your-github-token` in URL).
+3. Handles private repositories via standard SSH authentication (assumes SSH keys are loaded).
 4. `chown -R odoo:odoo /opt/odoo/custom-addons`.
 - List all `__manifest__.py` under `custom-addons` (maxdepth 2).
 - If **zero** manifests found → script exits 1.

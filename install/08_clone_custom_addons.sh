@@ -49,10 +49,13 @@ export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no"
         continue
     fi
   
+    # Determine the user to run git clone as
+    CLONE_USER="${SUDO_USER:-$USER}"
+
     # Attempt to clone the specific Odoo version branch, fall back to default branch
-    if ! git clone --depth 1 --branch "$TARGET_BRANCH" "$repo_url" "$clone_path" 2>/dev/null; then
+    if ! sudo -u "$CLONE_USER" git clone --depth 1 --branch "$TARGET_BRANCH" "$repo_url" "$clone_path" 2>/dev/null; then
       echo "    Branch '$TARGET_BRANCH' not found. Trying default branch..."
-      git clone --depth 1 "$repo_url" "$clone_path" || echo "❌ Failed to clone $repo_name. Skipping."
+      sudo -u "$CLONE_USER" git clone --depth 1 "$repo_url" "$clone_path" || echo "❌ Failed to clone $repo_name. Skipping."
     fi
   
   done < "$ADDONS_FILE"

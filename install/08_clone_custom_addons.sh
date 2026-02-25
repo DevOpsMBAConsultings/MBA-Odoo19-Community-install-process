@@ -30,8 +30,8 @@ if [ ! -f "$ADDONS_FILE" ]; then
   exit 0
 fi
 
+export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no"
 
-  
   while IFS= read -r repo_url || [ -n "$repo_url" ]; do
     # Skip comments and empty lines
     repo_url=$(echo "$repo_url" | xargs) # Trim whitespace

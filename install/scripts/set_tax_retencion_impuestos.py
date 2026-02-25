@@ -294,39 +294,25 @@ with cr_context as cr:
         if not tax_0_sale:
             print(f"  [ERROR] source 0% sale tax not found. Cannot set mapping.", file=sys.stderr)
         else:
-            # Add mapping: 0% -> Retención de impuestos (The group tax)
+            # Odoo 19: Apply tax replacements directly on the tax record
+            # We add `fp.id` to `fiscal_position_ids` and `tax_0_sale.id` to `original_tax_ids` on `final_tax`
+            print(f"  [MAPPING] Configuring {final_tax.name} to replace {tax_0_sale.name} when '{fp.name}' is applied...")
             
-            # Check if mapping exists by iterating over fp.tax_ids
-            # This avoids accessing env["account.fiscal.position.tax"] directly which triggered a KeyError
-            mapping_exists = False
-            lines_to_remove = []
-            
-            for line in fp.tax_ids:
-                if line.src_tax_id.id == tax_0_sale.id:
-                    if line.tax_dest_id.id == final_tax.id:
-                        mapping_exists = True
-                    else:
-                        # Mark conflicting lines for removal (e.g. mapping to null or another tax)
-                        lines_to_remove.append(line.id)
-
-            if not mapping_exists:
-                # Unlink conflicting lines
-                if lines_to_remove:
-                    fp.write({"tax_ids": [(2, line_id) for line_id in lines_to_remove]})
-                    print(f"  [Unlinked] Removed {len(lines_to_remove)} conflicting mappings for source tax {tax_0_sale.name}")
-                
-                # Create new mapping
-                fp.write({
-                    "tax_ids": [
-                        (0, 0, {
-                            "src_tax_id": tax_0_sale.id,
-                            "tax_dest_id": final_tax.id,
-                        })
-                    ]
+            # 1. Ensure the destination tax (final_tax) replaces the source tax (tax_0_sale)
+            if tax_0_sale.id not in final_tax.original_tax_ids.ids:
+                final_tax.write({
+                    "original_tax_ids": [(4, tax_0_sale.id)]
                 })
-                print(f"  [MAPPING] {tax_0_sale.name} -> {final_tax.name} in '{fp.name}'")
-            else:
-                print(f"  [MAPPING] Already exists: {tax_0_sale.name} -> {final_tax.name}")
+                print(f"    - Added {tax_0_sale.name} to replaced taxes (original_tax_ids)")
+            
+            # 2. Ensure the destination tax (final_tax) is triggered by the fiscal position (fp)
+            if fp.id not in final_tax.fiscal_position_ids.ids:
+                final_tax.write({
+                    "fiscal_position_ids": [(4, fp.id)]
+                })
+                print(f"    - Added {fp.name} to linked fiscal positions (fiscal_position_ids)")
+            
+            print(f"  [MAPPING] Complete: {tax_0_sale.name} -> {final_tax.name} in '{fp.name}'")
 
     cr.commit()
     print("Done.")

@@ -103,6 +103,8 @@ while [[ -z "${LETSENCRYPT_EMAIL:-}" ]]; do
   fi
 done
 
+read -r -p "GitHub Token (Optional, for cloning private addons): " GITHUB_TOKEN
+
 # -------------------------------------------------------------------
 # Optional: remote SSL storage (certificates survive server reprovisioning)
 # Prompt at runtime so the repo stays public without secrets.
@@ -145,6 +147,7 @@ export ODOO_SSL_STORAGE
 export ODOO_VERSION
 export DOMAIN
 export LETSENCRYPT_EMAIL
+export GITHUB_TOKEN
 export ODOO_EXTRA_MODULES
 export ALLOW_ODOO_PORT
 export REPO_ROOT

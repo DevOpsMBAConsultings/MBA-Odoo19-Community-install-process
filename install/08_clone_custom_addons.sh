@@ -38,6 +38,18 @@ export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no"
     [[ "$repo_url" =~ ^#.*$ ]] && continue
     [[ -z "$repo_url" ]] && continue
   
+    # If a GITHUB_TOKEN is provided, transform GitHub URLs to use the token for authentication
+    if [ -n "$GITHUB_TOKEN" ]; then
+        if [[ "$repo_url" == git@github.com:* ]]; then
+            # Convert git@github.com:org/repo.git to https://TOKEN@github.com/org/repo.git
+            repo_path="${repo_url#git@github.com:}"
+            repo_url="https://${GITHUB_TOKEN}@github.com/${repo_path}"
+        elif [[ "$repo_url" == https://github.com/* ]]; then
+            # Convert https://github.com/org/repo.git to https://TOKEN@github.com/org/repo.git
+            repo_path="${repo_url#https://github.com/}"
+            repo_url="https://${GITHUB_TOKEN}@github.com/${repo_path}"
+        fi
+    fi
   
     repo_name=$(basename "$repo_url" .git)
     clone_path="$TARGET_DIR/$repo_name"

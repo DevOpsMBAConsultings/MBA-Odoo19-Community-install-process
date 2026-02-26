@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 """
-Create tax "Retención de Impuestos" as a tax group (Grupo de impuestos) with:
-1. "ITBMS 7% (Operaciones con Retención)" (7%)
-2. "ITBMS 50% (Operaciones con Retención)" (-3.5%)
+Create retention taxes and group taxes for Panama:
+Base taxes:
+1. ITBMS 0% (Operacion Exento de Impuesto) (0%)
+2. ITBMS 7% (Operaciones con Retención) (7%)
+3. ITBMS 50% (Operaciones con Retención) (-3.5%)
+4. ITBMS 100% (Operaciones con Retención) (-7.0%)
 
-And assign it to the fiscal position "Retención de impuestos".
+Group taxes:
+1. Retención de impuestos 50% (contains 7% and -3.5%)
+2. Retención de impuestos 100% (contains 7% and -7.0%)
+3. Exento de Impuestos 100% (contains 0%)
+
+And assign "Retención de impuestos 50%" to the fiscal position "Retención de impuestos" by default.
 
 Run after set_fiscal_position_retencion.py and set_default_taxes_pa.py.
 Uses ODOO_CONF, DB_NAME, ODOO_HOME, ODOO_COUNTRY_CODE (default PA).
@@ -20,7 +28,6 @@ DB_NAME = os.environ.get("DB_NAME")
 COUNTRY_CODE = (os.environ.get("ODOO_COUNTRY_CODE") or "PA").strip().upper()
 FP_NAME = (os.environ.get("ODOO_FISCAL_POSITION_RETENCION_NAME") or "Retención de impuestos").strip()
 TAX_GROUP_NAME = (os.environ.get("ODOO_TAX_GROUP_RETENCION_NAME") or "Retención de Impuestos").strip()
-TAX_FINAL_NAME = "Retención de impuestos" # The group tax name
 
 if not ODOO_CONF or not DB_NAME:
     print("ERROR: ODOO_CONF and DB_NAME must be set.", file=sys.stderr)
@@ -96,166 +103,150 @@ with cr_context as cr:
         print(f"--- Processing Company: {company.name} ---")
 
         # ---------------------------------------------------------------------
-        # Paso 3 (Pre-req): Creación de grupo de impuestos (Tax Group)
+        # Paso 1: Creación de grupo de impuestos (Tax Group) Category
         # ---------------------------------------------------------------------
-        # Name: Retención de Impuestos
-        group = TaxGroup.search(
-            [
-                ("company_id", "=", company.id),
-                ("country_id", "=", country.id),
-                ("name", "=", TAX_GROUP_NAME),
-            ],
-            limit=1,
-        )
+        group = TaxGroup.search([
+            ("company_id", "=", company.id),
+            ("country_id", "=", country.id),
+            ("name", "=", TAX_GROUP_NAME),
+        ], limit=1)
         if not group:
-            group = TaxGroup.create(
-                {
-                    "name": TAX_GROUP_NAME,
-                    "company_id": company.id,
-                    "country_id": country.id,
-                }
-            )
-            print(f"  [CREATE] Tax Group '{TAX_GROUP_NAME}'")
+            group = TaxGroup.create({
+                "name": TAX_GROUP_NAME,
+                "company_id": company.id,
+                "country_id": country.id,
+            })
+            print(f"  [CREATE] Tax Group Category '{TAX_GROUP_NAME}'")
         else:
-             print(f"  [EXISTS] Tax Group '{TAX_GROUP_NAME}'")
+             print(f"  [EXISTS] Tax Group Category '{TAX_GROUP_NAME}'")
 
         # ---------------------------------------------------------------------
-        # Paso 1. Creación de Impuesto de 7%
-        # Nombre del Impuesto: ITBMS 7% (Operaciones con Retención)
+        # Paso 2: Creación de Impuestos Base (Componentes)
         # ---------------------------------------------------------------------
-        tax1_name = "ITBMS 7% (Operaciones con Retención)"
-        tax1 = Tax.search(
-            [
+        # Dictionary of taxes to ensure they exist
+        base_taxes_data = {
+            "ITBMS 0% (Operacion Exento de Impuesto)": {
+                "amount": 0.0,
+                "description": "ITBMS 0% Venta",
+                "invoice_label": "ITBMS 0% Venta",
+                "is_base_affected": False
+            },
+            "ITBMS 7% (Operaciones con Retención)": {
+                "amount": 7.0,
+                "description": "ITBMS 7% Venta",
+                "invoice_label": "7%",  # Was '7%', could be ITBMS 7% Venta, sticking to previous script implementation
+                "is_base_affected": True
+            },
+            "ITBMS 50% (Operaciones con Retención)": {
+                "amount": -3.5,
+                "description": "ITBMS -50% Venta",
+                "invoice_label": "-3.5%",
+                "is_base_affected": False
+            },
+            "ITBMS 100% (Operaciones con Retención)": {
+                "amount": -7.0,
+                "description": "ITBMS -100% Venta",
+                "invoice_label": "-7.0%",
+                "is_base_affected": False
+            }
+        }
+
+        created_base_taxes = {}
+        for b_name, b_data in base_taxes_data.items():
+            tax = Tax.search([
                 ("company_id", "=", company.id),
                 ("type_tax_use", "=", "sale"),
-                ("name", "=", tax1_name),
-            ],
-            limit=1,
-        )
-        
-        tax1_vals = {
-            "name": tax1_name,
-            "type_tax_use": "sale",
-            "amount_type": "percent",
-            "amount": 7.0,
-            "description": "ITBMS 7% Venta",
-            "tax_group_id": group.id,
-            "country_id": country.id,
-            "company_id": company.id,
-            # Config options
-            "price_include": False,
-            "include_base_amount": False,      # Afecta la base de los impuestos subscuentes: <En Blanco> (False)
-            "is_base_affected": True,          # Base afectada por impuestos previos: Checked (True)
-            # Label (Etiqueta on invoices)
-            "invoice_label": "7%", 
+                ("name", "=", b_name),
+            ], limit=1)
+            
+            vals = {
+                "name": b_name,
+                "type_tax_use": "sale",
+                "amount_type": "percent",
+                "amount": b_data["amount"],
+                "description": b_data["description"],
+                "tax_group_id": group.id,
+                "country_id": country.id,
+                "company_id": company.id,
+                "price_include": False,
+                "include_base_amount": False,
+                "is_base_affected": b_data["is_base_affected"],
+                "invoice_label": b_data["invoice_label"],
+            }
+            vals = safe_tax_vals(vals)
+
+            if not tax:
+                tax = Tax.create(vals)
+                print(f"  [CREATE] Base Tax: '{b_name}'")
+            else:
+                tax.write(vals)
+                print(f"  [UPDATE] Base Tax: '{b_name}'")
+            created_base_taxes[b_name] = tax
+
+
+        # ---------------------------------------------------------------------
+        # Paso 3. Creación de Objetos Grupo de Impuestos (Objects with children)
+        # ---------------------------------------------------------------------
+        group_taxes_data = {
+            "Retención de impuestos 50%": {
+                "children": ["ITBMS 7% (Operaciones con Retención)", "ITBMS 50% (Operaciones con Retención)"],
+                "invoice_label": "ITBMS 7% (Operaciones con Retención)"
+            },
+            "Retención de impuestos 100%": {
+                "children": ["ITBMS 7% (Operaciones con Retención)", "ITBMS 100% (Operaciones con Retención)"],
+                "invoice_label": "ITBMS 7% (Operaciones con Retención)" # same label according to sheet
+            },
+            "Exento de Impuestos 100%": {
+                "children": ["ITBMS 0% (Operacion Exento de Impuesto)"],
+                "invoice_label": "ITBMS 7% (Operaciones con Exento)" # Requested from sheet
+            }
         }
         
-        # Filter vals to ensuring all keys exist in the model
-        tax1_vals = safe_tax_vals(tax1_vals)
+        main_tax_50 = None
 
-        if not tax1:
-            tax1 = Tax.create(tax1_vals)
-            print(f"  [CREATE] Tax 1: '{tax1_name}'")
-        else:
-            tax1.write(tax1_vals)
-            print(f"  [UPDATE] Tax 1: '{tax1_name}'")
-
-
-        # ---------------------------------------------------------------------
-        # Paso 2. Creación de Impuesto de Retención de 50%
-        # Nombre del Impuesto: ITBMS 50% (Operaciones con Retención)
-        # Importe: -3.5%
-        # ---------------------------------------------------------------------
-        tax2_name = "ITBMS 50% (Operaciones con Retención)"
-        tax2 = Tax.search(
-            [
-                ("company_id", "=", company.id),
-                ("type_tax_use", "=", "sale"),
-                ("name", "=", tax2_name),
-            ],
-            limit=1,
-        )
-        
-        tax2_vals = {
-            "name": tax2_name,
-            "type_tax_use": "sale",
-            "amount_type": "percent",
-            "amount": -3.5,
-            "description": "ITBMS -50% Venta",
-            "tax_group_id": group.id,
-            "country_id": country.id,
-            "company_id": company.id,
-            # Config options
-            "price_include": False,
-            "include_base_amount": False,      # Afecta la base de los impuestos subscuentes: <En Blanco> (False)
-            "is_base_affected": False,         # Base afectada por impuestos previos: <En Blanco> (False)
-            # Label
-            "invoice_label": "-3.5%",
-        }
-        
-        # Filter vals to ensuring all keys exist in the model
-        tax2_vals = safe_tax_vals(tax2_vals)
-
-        if not tax2:
-            tax2 = Tax.create(tax2_vals)
-            print(f"  [CREATE] Tax 2: '{tax2_name}'")
-        else:
-            tax2.write(tax2_vals)
-            print(f"  [UPDATE] Tax 2: '{tax2_name}'")
-
-        # ---------------------------------------------------------------------
-        # Paso 3. Creación de grupo de impuestos (The Tax Object)
-        # Nombre del Impuesto: Retención de impuestos
-        # Cálculo de Impuestos: Grupo de Impuestos
-        # ---------------------------------------------------------------------
-        
-        final_tax = Tax.search(
-            [
+        for g_name, g_data in group_taxes_data.items():
+            g_tax = Tax.search([
                 ("company_id", "=", company.id),
                 ("country_id", "=", country.id),
-                ("name", "=", TAX_FINAL_NAME),
+                ("name", "=", g_name),
                 ("type_tax_use", "=", "sale"),
-            ],
-            limit=1,
-        )
+            ], limit=1)
 
-        final_tax_vals = {
-            "name": TAX_FINAL_NAME,
-            "type_tax_use": "sale",
-            "amount_type": "group",
-            "company_id": company.id,
-            "country_id": country.id,
-            "tax_group_id": group.id,
-            "children_tax_ids": [(6, 0, [tax1.id, tax2.id])],
-            "description": False, # Description blank per requirements
-            "invoice_label": "", # Etiqueta blank (Use empty string instead of False for safety)
-        }
-        
-        # Filter vals to ensuring all keys exist in the model
-        final_tax_vals = safe_tax_vals(final_tax_vals)
+            child_ids = [created_base_taxes[c_name].id for c_name in g_data["children"]]
 
-        if not final_tax:
-            final_tax = Tax.create(final_tax_vals)
-            print(f"  [CREATE] Group Tax Object: '{TAX_FINAL_NAME}' containing [7%, -3.5%]")
-        else:
-            final_tax.write(final_tax_vals)
-            print(f"  [UPDATE] Group Tax Object: '{TAX_FINAL_NAME}'")
+            vals = {
+                "name": g_name,
+                "type_tax_use": "sale",
+                "amount_type": "group",
+                "company_id": company.id,
+                "country_id": country.id,
+                "tax_group_id": group.id,
+                "children_tax_ids": [(6, 0, child_ids)],
+                "description": False,
+                "invoice_label": g_data["invoice_label"],
+            }
+            vals = safe_tax_vals(vals)
+
+            if not g_tax:
+                g_tax = Tax.create(vals)
+                print(f"  [CREATE] Group Tax Container: '{g_name}'")
+            else:
+                g_tax.write(vals)
+                print(f"  [UPDATE] Group Tax Container: '{g_name}'")
+            
+            if g_name == "Retención de impuestos 50%":
+                main_tax_50 = g_tax
 
 
         # ---------------------------------------------------------------------
         # 4) Fiscal position "Retención de impuestos"
         # ---------------------------------------------------------------------
-        fp = FiscalPosition.search(
-            [
-                ("company_id", "=", company.id),
-                ("name", "=", FP_NAME),
-            ],
-            limit=1,
-        )
+        fp = FiscalPosition.search([
+            ("company_id", "=", company.id),
+            ("name", "=", FP_NAME),
+        ], limit=1)
         if not fp:
             print(f"  [ERROR] Fiscal position '{FP_NAME}' not found. Run set_fiscal_position_retencion.py first.", file=sys.stderr)
-            # Check if we should create it or fail? 
-            # The previous script assumes it exists. We will try to create it if missing as a fallback
             fp = FiscalPosition.create({
                 "name": FP_NAME,
                 "company_id": company.id,
@@ -264,25 +255,16 @@ with cr_context as cr:
             })
             print(f"  [CREATE] Fiscal position '{FP_NAME}' (fallback created)")
 
-        # Source: Exento 0% Venta
-        # Note: Previous script looked for "Exento 0% Venta". 
-        # We need to find the 0% tax to map FROM.
-        # Ideally we search for a tax with amount 0 and type sale.
-        tax_0_sale = Tax.search(
-            [
-                ("company_id", "=", company.id),
-                ("country_id", "=", country.id),
-                ("type_tax_use", "=", "sale"),
-                ("amount", "=", 0.0),
-                ("amount_type", "=", "percent"),
-            ],
-            limit=1,
-        )
+        # Map 0% base tax to our 50% Group Tax Default
+        tax_0_sale = Tax.search([
+            ("company_id", "=", company.id),
+            ("country_id", "=", country.id),
+            ("type_tax_use", "=", "sale"),
+            ("amount", "=", 0.0),
+            ("amount_type", "=", "percent"),
+        ], limit=1)
         
         if not tax_0_sale:
-            # Fallback search by name if multiple 0% exist or none found by amount
-            # Fallback search by name if multiple 0% exist or none found by amount
-            # Also search for "0%" name explicitly, as set_default_taxes_pa.py creates it as "0%"
             tax_0_sale = Tax.search([
                 ("company_id", "=", company.id),
                 ("type_tax_use", "=", "sale"),
@@ -293,26 +275,18 @@ with cr_context as cr:
 
         if not tax_0_sale:
             print(f"  [ERROR] source 0% sale tax not found. Cannot set mapping.", file=sys.stderr)
-        else:
-            # Odoo 19: Apply tax replacements directly on the tax record
-            # We add `fp.id` to `fiscal_position_ids` and `tax_0_sale.id` to `original_tax_ids` on `final_tax`
-            print(f"  [MAPPING] Configuring {final_tax.name} to replace {tax_0_sale.name} when '{fp.name}' is applied...")
+        elif main_tax_50:
+            print(f"  [MAPPING] Configuring {main_tax_50.name} to replace {tax_0_sale.name} when '{fp.name}' is applied...")
             
-            # 1. Ensure the destination tax (final_tax) replaces the source tax (tax_0_sale)
-            if tax_0_sale.id not in final_tax.original_tax_ids.ids:
-                final_tax.write({
-                    "original_tax_ids": [(4, tax_0_sale.id)]
-                })
+            if tax_0_sale.id not in main_tax_50.original_tax_ids.ids:
+                main_tax_50.write({"original_tax_ids": [(4, tax_0_sale.id)]})
                 print(f"    - Added {tax_0_sale.name} to replaced taxes (original_tax_ids)")
             
-            # 2. Ensure the destination tax (final_tax) is triggered by the fiscal position (fp)
-            if fp.id not in final_tax.fiscal_position_ids.ids:
-                final_tax.write({
-                    "fiscal_position_ids": [(4, fp.id)]
-                })
+            if fp.id not in main_tax_50.fiscal_position_ids.ids:
+                main_tax_50.write({"fiscal_position_ids": [(4, fp.id)]})
                 print(f"    - Added {fp.name} to linked fiscal positions (fiscal_position_ids)")
             
-            print(f"  [MAPPING] Complete: {tax_0_sale.name} -> {final_tax.name} in '{fp.name}'")
+            print(f"  [MAPPING] Complete: {tax_0_sale.name} -> {main_tax_50.name} in '{fp.name}'")
 
     cr.commit()
     print("Done.")

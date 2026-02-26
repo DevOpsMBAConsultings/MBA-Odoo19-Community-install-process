@@ -49,6 +49,7 @@ except (AttributeError, ImportError):
 
 # (amount, group_name, sale_desc, purchase_desc)
 ITBMS_SPECS = [
+    (7.0, "ITBMS 7%", "ITBMS 7% Venta", "ITBMS 7% Compra"),
     (10.0, "ITBMS 10%", "ITBMS 10% Venta", "ITBMS 10% Compra"),
     (15.0, "ITBMS 15%", "ITBMS 15% Venta", "ITBMS 15% Compra"),
 ]

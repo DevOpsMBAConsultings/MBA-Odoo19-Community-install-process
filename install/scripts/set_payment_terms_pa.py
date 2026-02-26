@@ -51,7 +51,7 @@ except (AttributeError, ImportError):
 
 # (name, days): balance due after N days (0 = immediate). Order = sequence.
 PAYMENT_TERMS = [
-    ("Efectivo", 0),
+    ("Efectivo(Contado)", 0),
     ("Crédito a 30 días", 30),
     ("Crédito a 60 días", 60),
     ("Crédito a 90 días", 90),

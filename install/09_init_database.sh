@@ -30,6 +30,7 @@ SET_PARTNER_TAGS_SCRIPT="${SCRIPT_DIR}/scripts/set_partner_tags.py"
 SET_CONTACTS_VIEW_SCRIPT="${SCRIPT_DIR}/scripts/set_contacts_default_view_kanban.py"
 SET_SALE_UOM_SCRIPT="${SCRIPT_DIR}/scripts/set_sale_uom_packaging.py"
 SET_PRODUCTS_SCRIPT="${SCRIPT_DIR}/scripts/set_default_products_pa.py"
+SET_PAPERFORMAT_SCRIPT="${SCRIPT_DIR}/scripts/set_default_paperformat.py"
 
 # Defaults (es_PA = Spanish Panama; override with ODOO_LANG=es_ES etc. if needed)
 LANG_CODE="${ODOO_LANG:-es_PA}"
@@ -198,6 +199,7 @@ if [[ "${INIT_OK}" == "1" ]]; then
   run_config_script "${SET_CONTACTS_VIEW_SCRIPT}" "Setting Contacts default view to Kanban..." 0
   run_config_script "${SET_SALE_UOM_SCRIPT}" "Enabling Units of measure and packaging in Sales..." 0
   run_config_script "${SET_PRODUCTS_SCRIPT}" "Creating default service products (0% tax)..." 1
+  run_config_script "${SET_PAPERFORMAT_SCRIPT}" "Configuring default paper format (US Letter, 5mm margins)..." 0
 
   echo ""
   echo "=== INSTALLATION SUMMARY ==="

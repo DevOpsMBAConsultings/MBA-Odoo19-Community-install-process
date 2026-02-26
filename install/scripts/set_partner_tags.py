@@ -69,6 +69,7 @@ TAG_NAMES = [
     "Crédito a 30 días",
     "Crédito a 60 días",
     "Crédito a 90 días",
+    "Crédito Otro"
     # Add more as needed:
     # "Contador",
     # "Legal",

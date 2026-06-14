@@ -18,6 +18,5 @@ logfile = /var/log/odoo/odoo{{ODOO_VERSION}}.log
 proxy_mode = True
 
 xmlrpc_port = 8069
-longpolling_port = 8072
 workers = 3
 

@@ -199,7 +199,7 @@ Para añadir repos o soportar otra versión: edita `config/oca_repos.conf`.
 | OCA repos clonados | `ls /opt/odoo/oca/` debe listar todos los repos seleccionados |
 | Rutas no fantasma | `grep addons_path /etc/odoo18.conf | tr ',' '\n' | xargs -I{} ls -d {} 2>&1` — ninguna línea con "No such file" |
 | UFW | `sudo ufw status`: 22, 80, 443 (y 8069 solo si `ALLOW_ODOO_PORT=1`) |
-| Nginx + SSL (Gateway) | Configurar Nginx en el Gateway para reenviar puertos 8069 y 8072 |
+| Nginx + SSL (Gateway) | Configurar Nginx en el Gateway para reenviar al puerto 8069 (HTTP y WebSockets) |
 
 ---
 
@@ -217,7 +217,7 @@ Para añadir repos o soportar otra versión: edita `config/oca_repos.conf`.
 ## Si algo falla
 
 - **No se puede llegar a Odoo**: Asegúrate de que el Gateway está configurado correctamente o abre el 8069 en UFW si accedes directo: `sudo ufw allow 8069/tcp && sudo ufw reload`.
-- **Se perdió la conexión en tiempo real**: Asegúrate de que la ubicación `/websocket` en el Nginx del Gateway apunte al puerto `8072`.
+- **Se perdió la conexión en tiempo real**: Asegúrate de que la ubicación `/websocket` en el Nginx del Gateway apunte al puerto `8069` (para Odoo 16+).
 - **Módulo no encontrado**: Verificar que el repo está en `/opt/odoo/oca/` o `/opt/odoo/custom-addons/` y que su ruta está en `addons_path`.
 - **Error de instalación de módulo**: Ver output del paso 09 o volver a correr `09_init_database.sh`.
 - **Iconos rotos en Odoo (después de instalar OCA)**: Ejecutar "Regenerate Assets Bundles" desde el modo desarrollador y limpiar caché del navegador (Ctrl+Shift+R).

@@ -158,13 +158,13 @@ with cr_context as cr:
             "ITBMS 50% (Operaciones con Retención)": {
                 "amount": -3.5,
                 "description": "ITBMS -50% Venta",
-                "invoice_label": "-3.5%",
+                "invoice_label": "ITBMS -50% Venta",
                 "is_base_affected": False
             },
             "ITBMS 100% (Operaciones con Retención)": {
                 "amount": -7.0,
                 "description": "ITBMS -100% Venta",
-                "invoice_label": "-7.0%",
+                "invoice_label": "ITBMS -100% Venta",
                 "is_base_affected": False
             }
         }
@@ -211,15 +211,18 @@ with cr_context as cr:
         group_taxes_data = {
             "Retención de impuestos 50%": {
                 "children": ["ITBMS 7% (Operaciones con Retención)", "ITBMS 50% (Operaciones con Retención)"],
-                "invoice_label": "ITBMS 7% (Operaciones con Retención)"
+                "invoice_label": "ITBMS 7% (Operaciones con Retención)",
+                "description": "Retención de impuestos 50%"
             },
             "Retención de impuestos 100%": {
                 "children": ["ITBMS 7% (Operaciones con Retención)", "ITBMS 100% (Operaciones con Retención)"],
-                "invoice_label": "ITBMS 7% (Operaciones con Retención)" # same label according to sheet
+                "invoice_label": "ITBMS 7% (Operaciones con Retención)", # same label according to sheet
+                "description": "ITBMS 7% (Operaciones con Retención)"
             },
             "Exento de Impuestos 100%": {
                 "children": ["ITBMS 0% (Operacion Exento de Impuesto)"],
-                "invoice_label": "ITBMS 7% (Operaciones con Exento)" # Requested from sheet
+                "invoice_label": "ITBMS 7% (Operaciones con Exento)", # Requested from sheet
+                "description": "ITBMS 7% (Operaciones Exentas)"
             }
         }
         
@@ -247,7 +250,7 @@ with cr_context as cr:
                 "country_id": country.id,
                 "tax_group_id": current_group_id,
                 "children_tax_ids": [(6, 0, child_ids)],
-                "description": False,
+                "description": g_data.get("description", False),
                 "invoice_label": g_data["invoice_label"],
             }
             vals = safe_tax_vals(vals)

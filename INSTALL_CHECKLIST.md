@@ -11,7 +11,7 @@ Usa esta lista para ver todo lo que hace el script y verificar que nada falta tr
 | Ítem | Requerido | Notas |
 |------|-----------|-------|
 | Ubuntu 24.04 LTS (o Ubuntu 22.04 LTS) | ✅ | VM limpia o bare metal |
-| Nombre de dominio | ✅ | e.g. `erp.example.com` (para Nginx + SSL) |
+| Nombre de dominio | ✅ | e.g. `erp.example.com` (apunta al Gateway) |
 | Email para Let's Encrypt | ✅ | Notificaciones y renovación SSL |
 | (Opcional) SSL storage remoto | — | S3/R2 o URL para backup/restore de certificados |
 | (Opcional) `ALLOW_ODOO_PORT=1` | — | Solo si quieres el puerto 8069 abierto (sin Nginx) |
@@ -36,7 +36,7 @@ Usa esta lista para ver todo lo que hace el script y verificar que nada falta tr
 | 08b | `08_clone_custom_addons.sh` | **Ver Custom Addons (08b) abajo** |
 | 09 | `09_init_database.sh` | **Ver Init database (09) abajo** |
 | 10 | `10_ufw_firewall.sh` | UFW: permitir OpenSSH, 80, 443; opcionalmente 8069 si `ALLOW_ODOO_PORT=1` |
-| 11 | `11_ngnix.sh` | Nginx reverse proxy, SSL Let's Encrypt (certbot), proxy a Odoo en 127.0.0.1:8069 |
+| — | Nginx y SSL | Ya **no** se configura localmente. Ver `docs/nginx_gateway_config.md` para el Gateway. |
 | — | `post/00_health_check.sh` | Verificar servicio, wkhtmltopdf, puertos, addons_path, addons |
 | — | `post/10_summary.sh` | Resumen de instalación |
 
@@ -199,7 +199,7 @@ Para añadir repos o soportar otra versión: edita `config/oca_repos.conf`.
 | OCA repos clonados | `ls /opt/odoo/oca/` debe listar todos los repos seleccionados |
 | Rutas no fantasma | `grep addons_path /etc/odoo18.conf | tr ',' '\n' | xargs -I{} ls -d {} 2>&1` — ninguna línea con "No such file" |
 | UFW | `sudo ufw status`: 22, 80, 443 (y 8069 solo si `ALLOW_ODOO_PORT=1`) |
-| Nginx + SSL | HTTPS funciona; certificado de Let's Encrypt |
+| Nginx + SSL (Gateway) | Configurar Nginx en el Gateway para reenviar puertos 8069 y 8072 |
 
 ---
 
@@ -216,7 +216,8 @@ Para añadir repos o soportar otra versión: edita `config/oca_repos.conf`.
 
 ## Si algo falla
 
-- **No se puede llegar a Odoo**: Abrir 8069 en UFW si no usas Nginx: `sudo ufw allow 8069/tcp && sudo ufw reload`.
+- **No se puede llegar a Odoo**: Asegúrate de que el Gateway está configurado correctamente o abre el 8069 en UFW si accedes directo: `sudo ufw allow 8069/tcp && sudo ufw reload`.
+- **Se perdió la conexión en tiempo real**: Asegúrate de que la ubicación `/websocket` en el Nginx del Gateway apunte al puerto `8072`.
 - **Módulo no encontrado**: Verificar que el repo está en `/opt/odoo/oca/` o `/opt/odoo/custom-addons/` y que su ruta está en `addons_path`.
 - **Error de instalación de módulo**: Ver output del paso 09 o volver a correr `09_init_database.sh`.
 - **Iconos rotos en Odoo (después de instalar OCA)**: Ejecutar "Regenerate Assets Bundles" desde el modo desarrollador y limpiar caché del navegador (Ctrl+Shift+R).

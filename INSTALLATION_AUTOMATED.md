@@ -73,9 +73,7 @@ El script te hará estas preguntas en orden:
 - ✅ Odoo Community 18
 - ✅ Python 3 con entorno virtual
 - ✅ wkhtmltopdf (versión parcheada para PDFs)
-- ✅ Nginx reverse proxy
-- ✅ Certificado SSL Let's Encrypt
-- ✅ Configuración de firewall (UFW)
+- ✅ Configuración de firewall (UFW) para permitir tráfico en el puerto 8069
 - ✅ Servicio systemd (`odoo18.service`)
 - ✅ **Módulos OCA en `/opt/odoo/oca/`** (si respondiste `s`)
 - ✅ Módulos propios de `custom_addons.txt` en `/opt/odoo/custom-addons/`
@@ -281,3 +279,4 @@ sudo ufw status
 - **Checklist completo:** [`INSTALL_CHECKLIST.md`](INSTALL_CHECKLIST.md)
 - **Equivalencias Enterprise vs OCA:** [`docs/oca_modules.md`](docs/oca_modules.md)
 - **Repos OCA por versión:** [`config/oca_repos.conf`](config/oca_repos.conf)
+- **Configuración Nginx en Gateway:** [`docs/nginx_gateway_config.md`](docs/nginx_gateway_config.md)

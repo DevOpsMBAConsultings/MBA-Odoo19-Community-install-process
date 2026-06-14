@@ -4,8 +4,7 @@ En instalaciones recientes de Odoo 18 automatizadas con este script, **Nginx no 
 
 ## Puertos Importantes en Odoo 18
 
-- **8069**: Puerto HTTP estándar para la aplicación web y llamadas API (REST/XML-RPC).
-- **8072**: Puerto para el servidor ASGI (WebSockets), fundamental para Live-chat, notificaciones en tiempo real ("Discuss") y eventos asíncronos. **Si este puerto no se redirige correctamente, la interfaz mostrará el error de "Se perdió la conexión en tiempo real..."**.
+- **8069**: Puerto HTTP estándar para la aplicación web, llamadas API (REST/XML-RPC) y **WebSockets**. En Odoo 16+, el puerto `8072` (Gevent/longpolling) ya no se usa por defecto; las conexiones WebSocket `/websocket` se sirven directamente por los workers principales en el puerto `8069`. **Si este puerto no se redirige correctamente, la interfaz mostrará el error de "Se perdió la conexión en tiempo real..."**.
 
 ## Configuración Recomendada de Nginx (Reverse Proxy)
 
@@ -33,9 +32,9 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Redirección de WebSockets (Chat/Notificaciones en tiempo real) (puerto 8072)
+    # Redirección de WebSockets (Chat/Notificaciones en tiempo real)
     location /websocket {
-        proxy_pass http://<IP_PRIVADA_ODOO>:8072;
+        proxy_pass http://<IP_PRIVADA_ODOO>:8069;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;

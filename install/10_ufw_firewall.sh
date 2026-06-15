@@ -16,6 +16,7 @@ ufw default allow outgoing
 
 ufw allow OpenSSH
 ufw allow 8069/tcp
+ufw allow 8072/tcp
 echo "Port 8069 (Odoo) allowed by default."
 
 # Enable ufw (non-interactive)

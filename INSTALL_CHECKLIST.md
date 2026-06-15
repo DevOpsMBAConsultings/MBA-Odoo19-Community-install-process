@@ -216,7 +216,7 @@ Para añadir repos o soportar otra versión: edita `config/oca_repos.conf`.
 
 ## Si algo falla
 
-- **No se puede llegar a Odoo**: Abrir 8069 en UFW si no usas Nginx: `sudo ufw allow 8069/tcp && sudo ufw reload`.
+- **No se puede llegar a Odoo**: Abrir 8069 y 8072 en UFW si no usas Nginx: `sudo ufw allow 8069/tcp && sudo ufw allow 8072/tcp && sudo ufw reload`.
 - **Módulo no encontrado**: Verificar que el repo está en `/opt/odoo/oca/` o `/opt/odoo/custom-addons/` y que su ruta está en `addons_path`.
 - **Error de instalación de módulo**: Ver output del paso 09 o volver a correr `09_init_database.sh`.
 - **Iconos rotos en Odoo (después de instalar OCA)**: Ejecutar "Regenerate Assets Bundles" desde el modo desarrollador y limpiar caché del navegador (Ctrl+Shift+R).

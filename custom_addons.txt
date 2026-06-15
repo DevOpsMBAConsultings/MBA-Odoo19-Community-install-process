@@ -31,4 +31,5 @@
 # Your private Golden Egg module for Panamanian electronic invoicing.
 # git@github.com:DevOpsMBAConsultings/facturacion_electronica.git
 
-
+# Custom MBA modules
+git@github.com:DevOpsMBAConsultings/partner_social.git

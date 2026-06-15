@@ -85,8 +85,8 @@ else
   fi
   [[ -z "${INIT_MODULES}" ]] && INIT_MODULES="l10n_pa"
 fi
-# Default Odoo standard modules to install (sale, purchase, crm, stock, contacts, account). Override with ODOO_EXTRA_MODULES or set empty to install none.
-ODOO_EXTRA_MODULES="${ODOO_EXTRA_MODULES:-sale,purchase,crm,stock,contacts,account}"
+# Default Odoo standard modules to install (sale_management, purchase, crm, stock, contacts, account). Override with ODOO_EXTRA_MODULES or set empty to install none.
+ODOO_EXTRA_MODULES="${ODOO_EXTRA_MODULES:-sale_management,purchase,crm,stock,contacts,account}"
 if [[ -n "${ODOO_EXTRA_MODULES}" ]]; then
   INIT_MODULES="${INIT_MODULES},${ODOO_EXTRA_MODULES}"
 fi

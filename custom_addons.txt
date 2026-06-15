@@ -26,7 +26,6 @@
 # https://github.com/sttl-technologies/sttl_odoo_apps.git
 
 # Your custom public modules
-# https://github.com/your-org/mba_partner_phone_pa.git
 
 # Your private Golden Egg module for Panamanian electronic invoicing.
 git@github.com:DevOpsMBAConsultings/facturacion_electronica.git
@@ -35,3 +34,4 @@ git@github.com:DevOpsMBAConsultings/facturacion_electronica.git
 git@github.com:DevOpsMBAConsultings/mba_invoicing_icon.git
 git@github.com:DevOpsMBAConsultings/web_responsive_custom.git
 git@github.com:DevOpsMBAConsultings/partner_social.git
+git@github.com:DevOpsMBAConsultings/mba_partner_phone_pa.git

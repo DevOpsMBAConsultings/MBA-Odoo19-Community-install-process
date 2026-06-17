@@ -46,7 +46,7 @@ _install_python310_from_source() {
 
   # Instalar venv y setuptools
   python3.10 -m ensurepip --upgrade
-  python3.10 -m pip install --upgrade pip setuptools wheel
+  python3.10 -m pip install --upgrade pip 'setuptools<70' wheel
 
   # Limpiar
   rm -rf "${PY_SRC}" "${PY_TARBALL}"
@@ -109,7 +109,7 @@ echo "Creando entorno virtual Python con ${PYTHON_BIN}..."
 sudo -u "${ODOO_USER}" "${PYTHON_BIN}" -m venv "${VENV_DIR}"
 
 echo "Actualizando pip, wheel, setuptools..."
-sudo -u "${ODOO_USER}" "${VENV_DIR}/bin/pip" install --upgrade pip wheel setuptools
+sudo -u "${ODOO_USER}" "${VENV_DIR}/bin/pip" install --upgrade pip wheel 'setuptools<70'
 
 if [[ ! -f "${ODOO_SRC}/requirements.txt" ]]; then
   echo "❌ No se encontró requirements.txt en ${ODOO_SRC}"
@@ -126,7 +126,7 @@ echo "Instalando dependencias Python de Odoo ${ODOO_VERSION}..."
 # ------------------------------------------------------------------
 if [[ "${ODOO_VERSION}" == "16" ]]; then
   echo "  ⚙️  Odoo 16: aplicando workaround para gevent (Cython<3)..."
-  sudo -u "${ODOO_USER}" "${VENV_DIR}/bin/pip" install "Cython<3" setuptools
+  sudo -u "${ODOO_USER}" "${VENV_DIR}/bin/pip" install "Cython<3" 'setuptools<70'
   sudo -u "${ODOO_USER}" "${VENV_DIR}/bin/pip" install \
     --no-build-isolation \
     "gevent==21.8.0"

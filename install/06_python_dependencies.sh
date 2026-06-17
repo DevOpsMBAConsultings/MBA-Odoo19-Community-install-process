@@ -86,9 +86,10 @@ esac
 echo ""
 echo ">>> Verifying setuptools/pkg_resources availability..."
 if ! sudo -u odoo "${VENV_PY}" -c "import pkg_resources" 2>/dev/null; then
-  echo "⚠️  pkg_resources missing after dependency install — re-installing setuptools..."
-  sudo -u odoo "${VENV_PY}" -m pip install --upgrade --force-reinstall setuptools
+  echo "⚠️  pkg_resources missing after dependency install — re-installing setuptools<70..."
+  sudo -u odoo "${VENV_PY}" -m pip install --upgrade --force-reinstall 'setuptools<70'
 fi
-sudo -u odoo "${VENV_PY}" -c "import pkg_resources; print(f'  ✅ pkg_resources OK (setuptools {pkg_resources.get_distribution(\"setuptools\").version})')"
+sudo -u odoo "${VENV_PY}" -c "import pkg_resources; print('  ✅ pkg_resources OK')"
 
 echo "✅ Python dependencies installed successfully for Odoo ${ODOO_VERSION}."
+

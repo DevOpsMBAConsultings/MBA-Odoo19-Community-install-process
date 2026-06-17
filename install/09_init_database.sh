@@ -167,8 +167,8 @@ echo "Defaults: LANG=${LANG_CODE}, COUNTRY=${COUNTRY_CODE}, WITHOUT_DEMO=${WITHO
 # Odoo imports pkg_resources at startup, so this MUST exist.
 # ---------------------------------------------------------------------------
 if ! sudo -u "${ODOO_USER}" "${ODOO_PY}" -c "import pkg_resources" 2>/dev/null; then
-  echo "⚠️  pkg_resources not found in venv — installing setuptools..."
-  sudo -u "${ODOO_USER}" "${ODOO_HOME}/venv/bin/pip" install --upgrade setuptools 2>&1 | tail -3
+  echo "⚠️  pkg_resources not found in venv — installing setuptools<70..."
+  sudo -u "${ODOO_USER}" "${ODOO_HOME}/venv/bin/pip" install --upgrade 'setuptools<70' 2>&1 | tail -3
   # Verify it worked
   if ! sudo -u "${ODOO_USER}" "${ODOO_PY}" -c "import pkg_resources" 2>/dev/null; then
     echo "❌ FATAL: Could not install setuptools/pkg_resources in ${ODOO_HOME}/venv"

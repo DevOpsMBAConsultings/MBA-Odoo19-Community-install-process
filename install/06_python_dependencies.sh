@@ -24,7 +24,7 @@ fi
 cd /tmp
 
 echo "Upgrading pip tooling..."
-sudo -u odoo "${VENV_PY}" -m pip install --upgrade pip setuptools wheel
+sudo -u odoo "${VENV_PY}" -m pip install --upgrade pip 'setuptools<70' wheel
 
 echo "Installing Odoo Python requirements (STANDARD MODE)..."
 sudo -u odoo "${VENV_PY}" -m pip install -r "${REQ_FILE}"
@@ -59,7 +59,8 @@ case "${ODOO_VERSION}" in
       "chardet==4.0.0" \
       "decorator==4.4.2" \
       "docopt==0.6.2" \
-      "pooch"
+      "pooch" \
+      "urllib3==1.26.20"
     ;;
   17)
     # Odoo 17: dependencias intermedias

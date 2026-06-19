@@ -88,9 +88,9 @@ echo "✅ Versión seleccionada: Odoo ${ODOO_VERSION}"
 
 read -r -p "GitHub Token (Optional, for cloning private addons): " GITHUB_TOKEN
 
-# Odoo standard modules to install at init (default: sale,purchase,crm,stock,contacts,account). Leave empty for none.
-read -r -p "Odoo standard modules to install [sale,purchase,crm,stock,contacts,account]: " ODOO_EXTRA_MODULES
-ODOO_EXTRA_MODULES="${ODOO_EXTRA_MODULES:-sale,purchase,crm,stock,contacts,account}"
+# Odoo standard modules to install at init
+echo "Odoo standard modules to install: sale,purchase,crm,stock,contacts,account"
+ODOO_EXTRA_MODULES="sale,purchase,crm,stock,contacts,account"
 
 # -------------------------------------------------------------------
 # OCA Modules — Auto-selection based on Odoo version
@@ -131,8 +131,8 @@ if [[ ${#OCA_REPOS_SELECTED[@]} -gt 0 ]]; then
     echo "   • $(basename "${repo_url}" .git)"
   done
   echo ""
-  read -r -p "¿Instalar módulos OCA para Odoo ${ODOO_VERSION}? (s/N) [N]: " INSTALL_OCA
-  INSTALL_OCA="${INSTALL_OCA:-N}"
+  echo "Instalando módulos OCA para Odoo ${ODOO_VERSION} de forma automática..."
+  INSTALL_OCA="s"
 
   if [[ "${INSTALL_OCA,,}" == "s" || "${INSTALL_OCA,,}" == "y" ]]; then
     for repo_url in "${OCA_REPOS_SELECTED[@]}"; do

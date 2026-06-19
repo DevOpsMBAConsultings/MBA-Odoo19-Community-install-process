@@ -49,6 +49,12 @@ export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no"
             repo_path="${repo_url#https://github.com/}"
             repo_url="https://${GITHUB_TOKEN}@github.com/${repo_path}"
         fi
+    else
+        # If no GITHUB_TOKEN is provided, and it's an SSH URL, explicitly skip it to prevent SSH hanging/errors
+        if [[ "$repo_url" == git@github.com:* ]]; then
+            echo "⚠️ No Token/Key provided. Skipping SSH repository: $repo_url"
+            continue
+        fi
     fi
   
     repo_name=$(basename "$repo_url" .git)
@@ -64,12 +70,16 @@ export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no"
     # Determine the user to run git clone as
     CLONE_USER="${SUDO_USER:-$USER}"
 
+    # We need to explicitly pass GIT_SSH_COMMAND to sudo so it doesn't get stripped.
+    # We add BatchMode=yes to prevent SSH from hanging on interactive prompts (e.g. unknown host, password).
+    export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o BatchMode=yes"
+
     # Attempt to clone the specific Odoo version branch, fall back to default branch
-    if ! sudo -u "$CLONE_USER" git clone --depth 1 --branch "$TARGET_BRANCH" "$repo_url" "$clone_path" 2>/dev/null; then
+    if ! sudo -u "$CLONE_USER" env GIT_SSH_COMMAND="$GIT_SSH_COMMAND" git clone --depth 1 --branch "$TARGET_BRANCH" "$repo_url" "$clone_path" 2>/dev/null; then
       echo "    Branch '$TARGET_BRANCH' not found. Trying branch '$ODOO_VERSION'..."
-      if ! sudo -u "$CLONE_USER" git clone --depth 1 --branch "$ODOO_VERSION" "$repo_url" "$clone_path" 2>/dev/null; then
+      if ! sudo -u "$CLONE_USER" env GIT_SSH_COMMAND="$GIT_SSH_COMMAND" git clone --depth 1 --branch "$ODOO_VERSION" "$repo_url" "$clone_path" 2>/dev/null; then
         echo "    Branch '$ODOO_VERSION' not found. Trying default branch..."
-        sudo -u "$CLONE_USER" git clone --depth 1 "$repo_url" "$clone_path" || echo "❌ Failed to clone $repo_name. Skipping."
+        sudo -u "$CLONE_USER" env GIT_SSH_COMMAND="$GIT_SSH_COMMAND" git clone --depth 1 "$repo_url" "$clone_path" || echo "❌ Failed to clone $repo_name. Skipping."
       fi
     fi
   

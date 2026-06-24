@@ -36,5 +36,3 @@ git@github.com:DevOpsMBAConsultings/mba_invoicing_icon.git
 git@github.com:DevOpsMBAConsultings/web_responsive_custom.git
 git@github.com:DevOpsMBAConsultings/partner_social.git
 
-# OCA Payroll
-https://github.com/OCA/payroll.git

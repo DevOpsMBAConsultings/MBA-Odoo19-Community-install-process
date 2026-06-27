@@ -142,7 +142,7 @@ run_config_script() {
     record_result "$script_name" "SUCCESS" ""
     # Show output on success too (already tee'd to terminal via exec above)
   else
-    local err_msg=$(grep -v "^$" "$log_file" | tail -n 1 | cut -c1-100)
+    local err_msg=$(grep -v "^$" "$log_file" | tail -n 1 | cut -c1-100 || true)
     record_result "$script_name" "FAILED" "$err_msg"
     echo "⚠️  Failed: $script_name"
     # Append failure details to run log
@@ -167,7 +167,7 @@ echo "Defaults: LANG=${LANG_CODE}, COUNTRY=${COUNTRY_CODE}, WITHOUT_DEMO=${WITHO
 # ---------------------------------------------------------------------------
 echo "Stopping Odoo service and cleaning up any active processes for ${DB_NAME}..."
 sudo systemctl stop "${ODOO_SERVICE}" > /dev/null 2>&1 || true
-sudo pkill -9 -f "odoo-bin.*-d ${DB_NAME}" > /dev/null 2>&1 || true
+sudo pkill -9 -f "[o]doo-bin.*-d ${DB_NAME}" > /dev/null 2>&1 || true
 
 # Data dir
 sudo mkdir -p "${ODOO_DATA_DIR}"
@@ -225,7 +225,7 @@ if [[ "${INIT_OK}" == "1" ]]; then
     if [[ $ret -eq 0 ]]; then
       record_result "Install Modules (Update)" "SUCCESS" ""
     else
-      err=$(grep -i "error" "$install_log" | tail -n 1 | cut -c1-100)
+      err=$(grep -i "error" "$install_log" | tail -n 1 | cut -c1-100 || true)
       record_result "Install Modules (Update)" "FAILED" "$err"
       echo "⚠️  Module update failed. Continuing..."
     fi
@@ -303,7 +303,7 @@ set -e
 if [[ $ret -eq 0 ]]; then
   record_result "Init Base DB" "SUCCESS" ""
 else
-  err=$(grep -i "error" "$base_log" | tail -n 1 | cut -c1-100)
+  err=$(grep -i "error" "$base_log" | tail -n 1 | cut -c1-100 || true)
   record_result "Init Base DB" "FAILED" "$err"
   echo "⚠️  Base install failed. Continuing..."
 fi
@@ -341,7 +341,7 @@ if [[ -n "${INIT_MODULES}" ]]; then
   if [[ $ret -eq 0 ]]; then
     record_result "Install Extra Modules" "SUCCESS" ""
   else
-    err=$(grep -i "error" "$mod_log" | tail -n 1 | cut -c1-100)
+    err=$(grep -i "error" "$mod_log" | tail -n 1 | cut -c1-100 || true)
     record_result "Install Extra Modules" "FAILED" "$err"
     echo "⚠️  Module install failed. Continuing..."
   fi

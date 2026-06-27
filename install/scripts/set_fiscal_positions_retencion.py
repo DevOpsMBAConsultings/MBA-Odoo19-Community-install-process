@@ -18,7 +18,7 @@ import sys
 
 ODOO_CONF = os.environ.get("ODOO_CONF")
 DB_NAME = os.environ.get("DB_NAME")
-AUTO_APPLY = os.environ.get("ODOO_FISCAL_POSITION_RETENCION_AUTO_APPLY", "1").strip() in ("1", "true", "yes")
+AUTO_APPLY = os.environ.get("ODOO_FISCAL_POSITION_RETENCION_AUTO_APPLY", "0").strip() in ("1", "true", "yes")
 
 FP_NAMES = [
     "Retención 50% de impuestos",

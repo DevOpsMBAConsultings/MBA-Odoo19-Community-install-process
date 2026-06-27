@@ -66,9 +66,9 @@ with cr_context as cr:
             limit=1,
         )
         if fp:
-            if not fp.auto_apply:
-                fp.auto_apply = True
-                print(f"Enabled 'Detectar de forma automática' for '{FP_NAME}' in company {company.name}.")
+            if fp.auto_apply:
+                fp.auto_apply = False
+                print(f"Disabled 'Detectar de forma automática' for '{FP_NAME}' in company {company.name}.")
             else:
                 print(f"Fiscal position '{FP_NAME}' already exists with auto_apply in company {company.name}.")
         else:
@@ -76,7 +76,7 @@ with cr_context as cr:
                 {
                     "name": FP_NAME,
                     "company_id": company.id,
-                    "auto_apply": True,
+                    "auto_apply": False,
                 }
             )
             print(f"Created fiscal position '{FP_NAME}' with Detectar de forma automática for company {company.name}.")

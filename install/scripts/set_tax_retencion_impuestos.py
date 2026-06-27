@@ -288,7 +288,7 @@ with cr_context as cr:
                 "name": FP_NAME_EXENTO,
                 "company_id": company.id,
                 "country_id": country.id,
-                "auto_apply": True,
+                "auto_apply": False,
             })
             print(f"  [CREATE] Fiscal position '{FP_NAME_EXENTO}' (fallback created)")
 

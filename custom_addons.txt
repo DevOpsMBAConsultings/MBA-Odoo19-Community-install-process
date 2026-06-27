@@ -15,11 +15,6 @@
 # OCA (Odoo Community Association) Repositories
 # Note: OCA often groups modules. We clone the whole repository.
 # The 'depth=1' flag can be used to speed up cloning by only getting the latest version.
-# https://github.com/OCA/account-financial-reporting.git
-# https://github.com/OCA/product-attribute.git
-# https://github.com/OCA/web.git
-https://github.com/OCA/credit-control.git
-
 # Odoo Mates Repositories
 # https://github.com/Odoo-Mates/odoo_apps.git
 

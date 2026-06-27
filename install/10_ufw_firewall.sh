@@ -32,6 +32,20 @@ ip6tables -F || true
 ip6tables -X || true
 systemctl start ufw
 
+# 🔴 FALLBACK: Añadir reglas explícitas de iptables por si netfilter-persistent bloquea a UFW
+echo "Adding direct iptables rules for strict environments..."
+iptables -I INPUT 1 -p tcp -m state --state NEW -m tcp --dport 8069 -j ACCEPT || true
+iptables -I INPUT 2 -p tcp -m state --state NEW -m tcp --dport 8072 -j ACCEPT || true
+
+if command -v netfilter-persistent >/dev/null 2>&1; then
+  echo "Saving iptables with netfilter-persistent..."
+  netfilter-persistent save || true
+elif command -v iptables-save >/dev/null 2>&1; then
+  echo "Saving iptables with iptables-save..."
+  mkdir -p /etc/iptables
+  iptables-save > /etc/iptables/rules.v4 || true
+fi
+
 # Final verification
 ufw status verbose
 

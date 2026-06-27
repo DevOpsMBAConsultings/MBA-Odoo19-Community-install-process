@@ -38,7 +38,7 @@ CUSTOM_ADDONS="/opt/odoo/custom-addons"
 SET_COUNTRY_SCRIPT="${SCRIPT_DIR}/scripts/set_default_country.py"
 SET_LANGUAGE_SCRIPT="${SCRIPT_DIR}/scripts/set_default_language.py"
 SET_TAXES_SCRIPT="${SCRIPT_DIR}/scripts/set_default_taxes_pa.py"
-SET_SALES_JOURNAL_SCRIPT="${SCRIPT_DIR}/scripts/set_default_sales_journal.py"
+
 SET_CREDIT_NOTES_JOURNAL_SCRIPT="${SCRIPT_DIR}/scripts/set_default_credit_notes_journal.py"
 SET_FISCAL_POSITION_SCRIPT="${SCRIPT_DIR}/scripts/set_fiscal_position_exento.py"
 SET_FISCAL_POSITION_RETENCION_SCRIPT="${SCRIPT_DIR}/scripts/set_fiscal_positions_retencion.py"
@@ -239,7 +239,7 @@ if [[ "${INIT_OK}" == "1" ]]; then
   # Run all post-install configuration scripts
   run_config_script "${SET_TAXES_SCRIPT}" "Setting 0% taxes for Panama..." 1
   run_config_script "${SET_ITBMS_TAXES_SCRIPT}" "Setting ITBMS 10% and 15% taxes for Panama..." 1
-  run_config_script "${SET_SALES_JOURNAL_SCRIPT}" "Setting default sales journal (Facturación electrónica)..." 1
+
   run_config_script "${SET_CREDIT_NOTES_JOURNAL_SCRIPT}" "Setting default credit notes journal (Notas de Crédito)..." 1
   run_config_script "${SET_FISCAL_POSITION_SCRIPT}" "Setting fiscal position Exento de impuestos (Detectar de forma automática)..." 1
   run_config_script "${SET_FISCAL_POSITION_RETENCION_SCRIPT}" "Setting fiscal position Retención de impuestos..." 1
@@ -355,7 +355,7 @@ run_config_script "${SET_LANGUAGE_SCRIPT}" "Setting default language to ${LANG_C
 # Run all post-install configuration scripts
 run_config_script "${SET_TAXES_SCRIPT}" "Setting 0% taxes for Panama..." 1
 run_config_script "${SET_ITBMS_TAXES_SCRIPT}" "Setting ITBMS 10% and 15% taxes for Panama..." 1
-run_config_script "${SET_SALES_JOURNAL_SCRIPT}" "Setting default sales journal (Facturación electrónica)..." 1
+
 run_config_script "${SET_CREDIT_NOTES_JOURNAL_SCRIPT}" "Setting default credit notes journal (Notas de Crédito)..." 1
 run_config_script "${SET_FISCAL_POSITION_SCRIPT}" "Setting fiscal position Exento de impuestos (Detectar de forma automática)..." 1
 run_config_script "${SET_FISCAL_POSITION_RETENCION_SCRIPT}" "Setting fiscal position Retención de impuestos..." 1

@@ -65,24 +65,9 @@ else
   INIT_MODULES=""
   # Use AUTO_ADDONS if it exists (new method), otherwise fallback to CUSTOM_ADDONS (legacy/manual)
   AUTO_ADDONS="/opt/odoo/auto-addons"
-  SCAN_DIR=""
-  
-  if [[ -d "${AUTO_ADDONS}" ]] && [[ -n "$(ls -A "${AUTO_ADDONS}")" ]]; then
-      SCAN_DIR="${AUTO_ADDONS}"
-  elif [[ -d "${CUSTOM_ADDONS}" ]]; then
-      SCAN_DIR="${CUSTOM_ADDONS}"
-  fi
-
-  if [[ -n "${SCAN_DIR}" ]]; then
-    for dir in "${SCAN_DIR}"/*/; do
-      # In auto-addons, everything is a symlink to a module root, so check for manifest
-      # In custom-addons (legacy), we also check for manifest
-      [[ -f "${dir}__manifest__.py" ]] || continue
-      name="$(basename "$dir")"
-      [[ -n "${INIT_MODULES}" ]] && INIT_MODULES="${INIT_MODULES},"
-      INIT_MODULES="${INIT_MODULES}${name}"
-    done
-  fi
+  # Se ha removido el escaneo automático (SCAN_DIR) porque forzaba la instalación de TODOS
+  # los submódulos de repositorios OCA, lo cual causaba crasheos si alguno tenía dependencias faltantes.
+  # Los módulos clonados seguirán estando disponibles en la interfaz web (Menú Aplicaciones) para su instalación manual segura.
   [[ -z "${INIT_MODULES}" ]] && INIT_MODULES="l10n_pa"
 fi
 # Default Odoo standard modules to install (sale_management, purchase, crm, stock, contacts, account). Override with ODOO_EXTRA_MODULES or set empty to install none.

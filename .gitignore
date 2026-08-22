@@ -1,2 +1,3 @@
 # Ignore the local key file to keep secrets out of the repository
 config/token.txt
+.DS_Store

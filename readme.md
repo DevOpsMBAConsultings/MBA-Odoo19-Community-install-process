@@ -1,5 +1,11 @@
 # MBA – Odoo 19 Community Installer
 
+[![Odoo 19](https://img.shields.io/badge/Odoo-19-714B67?style=flat-square&logo=odoo&logoColor=white)](https://www.odoo.com/)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04_LTS-E95420?style=flat-square&logo=ubuntu&logoColor=white)](https://releases.ubuntu.com/24.04/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Bash](https://img.shields.io/badge/Bash-Script-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)](#)
+[![Status](https://img.shields.io/badge/status-Beta-orange?style=flat-square)](#)
+
 Proceso de instalación estandarizado y repetible para **Odoo 19 Community** en **Ubuntu 24.04 LTS** (Beta — verificar madurez de OCA).
 
 ## 🎯 Objetivo

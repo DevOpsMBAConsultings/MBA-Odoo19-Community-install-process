@@ -1,5 +1,10 @@
 # MBA – Odoo 18 Community Installer
 
+[![Odoo 18](https://img.shields.io/badge/Odoo-18-714B67?style=flat-square&logo=odoo&logoColor=white)](https://www.odoo.com/)
+[![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04_LTS-E95420?style=flat-square&logo=ubuntu&logoColor=white)](https://releases.ubuntu.com/24.04/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![Bash](https://img.shields.io/badge/Bash-Script-4EAA25?style=flat-square&logo=gnu-bash&logoColor=white)](#)
+
 Proceso de instalación estandarizado y repetible para **Odoo 18 Community** en **Ubuntu 24.04** (versión recomendada).
 
 ## 🎯 Objetivo
